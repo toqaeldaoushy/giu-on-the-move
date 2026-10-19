@@ -1,0 +1,16 @@
+id,name,role,username,password_hash,phone,share_phone
+1,Admin (placeholder),admin,admin,,,0
+2,Ahmed Hassan,driver,driver1,,+20-000-000-0002,1
+3,Mahmoud Samir,driver,driver2,,+20-000-000-0003,1
+4,Youssef Adel,driver,driver3,,+20-000-000-0004,0
+5,Karim Nabil,driver,driver4,,+20-000-000-0005,1
+6,Student 01,rider,student01,,,0
+7,Student 02,rider,student02,,,0
+8,Student 03,rider,student03,,,0
+9,Student 04,rider,student04,,,0
+10,Student 05,rider,student05,,,0
+11,Student 06,rider,student06,,,0
+12,Student 07,rider,student07,,,0
+13,Student 08,rider,student08,,,0
+14,Student 09,rider,student09,,,0
+15,Student 10,rider,student10,,,0

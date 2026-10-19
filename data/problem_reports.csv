@@ -1,0 +1,4 @@
+id,trip_run_id,driver_id,report_type,note,created_at
+1,1,2,bus_full,Bus full after the second stop (placeholder note),2026-10-03T08:16:43
+2,9,3,traffic_delay,Heavy traffic on the highway (placeholder note),2026-10-04T15:50:11
+3,25,2,breakdown,Bus will not start (placeholder note),2026-10-07T17:05:00

@@ -1,0 +1,52 @@
+Database: data/giu_on_the_move.db
+
+[PASS] Database integrity and foreign keys
+       integrity_check = ok; 0 foreign key violations
+[PASS] All 12 tables exist and the CSV files match the database
+       missing tables: none; mismatches: none
+[PASS] Completeness (no empty cells except the optional fields)
+       0 unexpected empty cells out of 17901
+[PASS] No duplicate rows in any table
+       0 duplicate rows
+[PASS] Roles are used correctly (drivers drive, the admin assigns, riders set alerts)
+       users by role: {'admin': 1, 'driver': 4, 'rider': 10}; wrong role references: none
+[PASS] Timetable matches the real schedule
+       found [('arrival_first', 'inbound', '08:00'), ('arrival_second', 'inbound', '10:00'), ('departure_first', 'outbound', '13:45'), ('departure_second', 'outbound', '15:30'), ('departure_third', 'outbound', '17:30')]
+[PASS] 30 trip runs: 5 trips on each of 6 consecutive operating days (Saturday to Thursday, Friday off)
+       30 runs on ['2026-10-03', '2026-10-04', '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08']
+[PASS] Every trip run has a bus and a driver assigned
+       unassigned runs: none
+[PASS] Run status matches its data (completed has pings; scheduled and cancelled have none)
+       statuses: {'completed': 26, 'scheduled': 3, 'cancelled': 1, 'in_progress': 0}; problems: none
+[PASS] Data is consistent with 'now' (2026-10-08T13:40:00): upcoming runs scheduled, past runs finished
+       problems: none
+[PASS] No driver or bus is assigned to two overlapping trips
+       clashes: none
+[PASS] Every ping belongs to a completed run, its assigned bus and that bus's phone
+       0 pings with a wrong run, bus or device (of 2150)
+[PASS] First and last ping equal the run's actual start and end
+       0 runs where they differ
+[PASS] Ping interval = 30 s and time never goes backwards
+       0 of 2124 intervals differ; 0 backward timestamps
+[PASS] Actual start is within -5 / +20 minutes of the scheduled time
+       offsets from -1.0 to 12.2 min; outside the range: none
+[PASS] All pings are inside the route area
+       0 points outside the route bounding box
+[PASS] Inbound trips go pickup to campus, outbound trips go campus to pickup (within 1.5 km)
+       largest endpoint error 0.029 km; wrong runs: none
+[PASS] Speeds are realistic (0 to 120 km/h; each trip starts at 0)
+       min 0.0, max 99.8, mean 58.0 km/h; 0 trips with a non-zero first speed
+[PASS] Reported speed matches the distance moved since the previous ping (mean error < 2.0 km/h)
+       mean error 0.64 km/h, max 2.0 km/h over 2124 intervals
+[PASS] Problem reports are made by the run's driver at a sensible time; every cancelled run has one
+       3 reports; problems: none; cancelled runs without a report: none
+[PASS] Assignment changes match the current assignment and were made before the trip
+       2 changes; problems: none
+[PASS] Alerts are for upcoming runs on the right route; rider reports are inside completed runs
+       10 alerts, 2 rider reports; problems: none
+[PASS] Phone numbers are placeholders (+20-000-000-xxxx) and only drivers have one
+       problems: none
+[PASS] The data contains the situations each interface needs to show
+       delayed with a report: [9]; cancelled: [25]; driver swaps: 1; bus swaps: 1; 'bus full' reports present: True
+
+SUMMARY: 24/24 checks passed

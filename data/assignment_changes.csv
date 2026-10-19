@@ -1,0 +1,3 @@
+id,trip_run_id,old_driver_id,new_driver_id,old_bus_id,new_bus_id,changed_by,reason,changed_at
+1,12,3,4,1,1,1,Original driver unavailable (placeholder),2026-10-04T16:00:00
+2,29,3,3,3,2,1,Original bus needed for service (placeholder),2026-10-07T17:40:00

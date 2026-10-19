@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.claude/
+CLAUDE.md
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.expo/
+dist/
+web-build/
+*.log

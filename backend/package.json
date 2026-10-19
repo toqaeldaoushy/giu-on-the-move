@@ -1,0 +1,30 @@
+{
+  "name": "giu-on-the-move-backend",
+  "version": "0.1.0",
+  "description": "Backend for GIU on the Move: REST API and live GPS pings for the rider, driver and admin apps",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "seed:credentials": "node scripts/seed-credentials.js",
+    "simulate:driver": "node scripts/driver-simulator.js",
+    "watch:rider": "node scripts/rider-watch.js",
+    "test": "node --test --test-concurrency=1 \"tests/*.test.js\"",
+    "eval:eta": "node scripts/eval-eta.js"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "socket.io": "^4.8.4"
+  }
+}

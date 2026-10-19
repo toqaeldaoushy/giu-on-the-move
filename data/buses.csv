@@ -1,0 +1,4 @@
+id,bus_number,plate,capacity,status,device_id
+1,04,TEST-004,48,active,phone_bus_04
+2,07,TEST-007,48,active,phone_bus_07
+3,11,TEST-011,48,active,phone_bus_11
