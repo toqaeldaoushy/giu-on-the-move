@@ -9,13 +9,15 @@ import { Button, ErrorText } from './src/components/ui';
 import LoginScreen from './src/screens/LoginScreen';
 import TimetableScreen from './src/screens/TimetableScreen';
 import TripScreen from './src/screens/TripScreen';
+import DriverHomeScreen from './src/screens/DriverHomeScreen';
+import DriverTripScreen from './src/screens/DriverTripScreen';
 
 const SESSION_KEY = 'giu-session';
 
 export default function App() {
   const [session, setSession] = useState(null); // { token, user }
   const [route, setRoute] = useState(null);     // the route line and stops, loaded once after login
-  const [openRun, setOpenRun] = useState(null); // the trip the rider is looking at
+  const [openRun, setOpenRun] = useState(null); // the trip the rider or driver is looking at
   const [starting, setStarting] = useState(true);
   const [error, setError] = useState('');
 
@@ -27,7 +29,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session || session.user.role !== 'rider') return;
     api('/route', { token: session.token })
       .then(setRoute)
       .catch((e) => {
@@ -54,6 +56,10 @@ export default function App() {
     screen = <Centered><ActivityIndicator color={colors.primary} /></Centered>;
   } else if (!session) {
     screen = <LoginScreen onLoggedIn={login} />;
+  } else if (session.user.role === 'driver') {
+    screen = openRun
+      ? <DriverTripScreen session={session} run={openRun} onBack={() => setOpenRun(null)} />
+      : <DriverHomeScreen session={session} onOpenTrip={setOpenRun} onLogout={logout} />;
   } else if (session.user.role !== 'rider') {
     screen = (
       <Centered>

@@ -19,6 +19,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "GIU on the Move uses your location during a trip you drive, so riders can see where the bus is."
+        }
+      ]
+    ]
   }
 }
