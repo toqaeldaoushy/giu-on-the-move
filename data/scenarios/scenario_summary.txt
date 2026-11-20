@@ -1,0 +1,27 @@
+SIMULATED DATA ONLY · seed 20261120 · route 39.9 km · 150 trips (50 tuning, 100 held-out)
+
+Generated trips (scheduled departure to arrival, minutes):
+  Light traffic  mean 42.9 (min 40.3, max 45.2) · mean moving speed 61.4 km/h · 2569 pings
+  Normal day     mean 55.5 (min 50.6, max 61.6) · mean moving speed 49.5 km/h · 3316 pings
+  Rush hour      mean 126.0 (min 113.5, max 134.4) · mean moving speed 21.9 km/h · 7446 pings
+  Incident       mean 68.9 (min 63.9, max 73.0) · mean moving speed 49.2 km/h · 4119 pings
+  Mixed          mean 74.8 (min 60.6, max 93.1) · mean moving speed 36.2 km/h · 4484 pings
+
+Tuning (tuning trips only): best blended settings = cap 1, window 1000 pings, full trust after 10% of route (MAE 8.3 min)
+
+Held-out evaluation, MAE in minutes (bias in brackets; + = predicted too late):
+  Method                            Light traffic  Normal day     Rush hour      Incident       Mixed          Overall        Stops ahead
+  Timetable                         3.3 (-3.3)     15.7 (-15.7)   86.1 (-86.1)   29.0 (-29.0)   37.6 (-37.6)   45.2 (-45.2)   28.2
+  Schedule                          1.1 (-0.9)     7.5 (-7.5)     44.5 (-44.5)   14.6 (-14.6)   18.8 (-18.8)   23.0 (-23.0)   13.6
+  Recent speed                      9.6 (5.2)      15.6 (9.0)     34.7 (18.0)    47.7 (36.3)    41.2 (29.8)    32.8 (21.1)    18.1
+  Blended (first version)           6.3 (2.2)      11.3 (2.6)     31.3 (-4.7)    41.3 (26.4)    34.2 (18.4)    28.0 (7.9)     14.3
+  Blended (tuned, now in the app)   2.0 (1.3)      2.7 (0.8)      10.2 (-5.9)    11.2 (-1.5)    11.4 (-1.7)    8.6 (-2.4)     6.2
+
+Held-out MAE by trip progress (0-25 / 25-50 / 50-75 / 75-95%):
+  Timetable                         45.4 / 44.9 / 44.9 / 45.7
+  Schedule                          38.1 / 26.8 / 16.3 / 7.0
+  Recent speed                      47.4 / 41.1 / 27.2 / 10.4
+  Blended (first version)           29.7 / 41.1 / 27.2 / 10.4
+  Blended (tuned, now in the app)   17.2 / 7.9 / 5.0 / 2.7
+
+Evaluation points per method: 13673; stop predictions per method: 28323

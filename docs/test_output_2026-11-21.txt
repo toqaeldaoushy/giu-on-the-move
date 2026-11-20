@@ -1,0 +1,199 @@
+
+> giu-on-the-move-backend@0.1.0 test
+> node --test --test-concurrency=1 "tests/*.test.js"
+
+TAP version 13
+# Subtest: login and roles
+    # Subtest: refuses a wrong password and an unknown user the same way
+    ok 1 - refuses a wrong password and an unknown user the same way
+      ---
+      duration_ms: 211.192984
+      type: 'test'
+      ...
+    # Subtest: logs in the demo users
+    ok 2 - logs in the demo users
+      ---
+      duration_ms: 102.967407
+      type: 'test'
+      ...
+    # Subtest: needs a login for everything else, and rejects a fake token
+    ok 3 - needs a login for everything else, and rejects a fake token
+      ---
+      duration_ms: 6.398083
+      type: 'test'
+      ...
+    # Subtest: keeps each role to its own actions
+    ok 4 - keeps each role to its own actions
+      ---
+      duration_ms: 191.600659
+      type: 'test'
+      ...
+    # Subtest: reports the (simulated) clock
+    ok 5 - reports the (simulated) clock
+      ---
+      duration_ms: 2.202218
+      type: 'test'
+      ...
+    1..5
+ok 1 - login and roles
+  ---
+  duration_ms: 1832.199759
+  type: 'suite'
+  ...
+# Subtest: timetable and privacy
+    # Subtest: shows the five trips of the day with the driver and bus
+    ok 1 - shows the five trips of the day with the driver and bus
+      ---
+      duration_ms: 99.863648
+      type: 'test'
+      ...
+    # Subtest: lists only the driver's own trips for the driver app, and lets the driver read a trip's live state
+    ok 2 - lists only the driver's own trips for the driver app, and lets the driver read a trip's live state
+      ---
+      duration_ms: 278.146104
+      type: 'test'
+      ...
+    # Subtest: marks finished and cancelled trips
+    ok 3 - marks finished and cancelled trips
+      ---
+      duration_ms: 103.931245
+      type: 'test'
+      ...
+    # Subtest: hides a driver's phone from riders unless the admin allows it, but never from the admin
+    ok 4 - hides a driver's phone from riders unless the admin allows it, but never from the admin
+      ---
+      duration_ms: 190.787259
+      type: 'test'
+      ...
+    1..4
+ok 2 - timetable and privacy
+  ---
+  duration_ms: 673.175501
+  type: 'suite'
+  ...
+# Subtest: a live trip, from the driver's phone to the rider's screen
+    # Subtest: does not accept positions before the trip has started
+    ok 1 - does not accept positions before the trip has started
+      ---
+      duration_ms: 3.04225
+      type: 'test'
+      ...
+    # Subtest: lets the assigned driver start the trip once, and not another driver
+    ok 2 - lets the assigned driver start the trip once, and not another driver
+      ---
+      duration_ms: 102.934335
+      type: 'test'
+      ...
+    # Subtest: sends each position to the rider with a falling ETA
+    ok 3 - sends each position to the rider with a falling ETA
+      ---
+      duration_ms: 19.967217
+      type: 'test'
+      ...
+    # Subtest: ignores a repeated position and refuses invalid ones
+    ok 4 - ignores a repeated position and refuses invalid ones
+      ---
+      duration_ms: 109.718401
+      type: 'test'
+      ...
+    # Subtest: also accepts positions over plain HTTP
+    ok 5 - also accepts positions over plain HTTP
+      ---
+      duration_ms: 7.237675
+      type: 'test'
+      ...
+    # Subtest: says "Delayed" when the bus crawls for five minutes
+    ok 6 - says "Delayed" when the bus crawls for five minutes
+      ---
+      duration_ms: 31.734903
+      type: 'test'
+      ...
+    # Subtest: gives the ETA to a rider's stop and knows when the bus has passed it
+    ok 7 - gives the ETA to a rider's stop and knows when the bus has passed it
+      ---
+      duration_ms: 5.372857
+      type: 'test'
+      ...
+    # Subtest: tells the admin about problems reported by the driver, and about "bus full" reports from riders
+    ok 8 - tells the admin about problems reported by the driver, and about "bus full" reports from riders
+      ---
+      duration_ms: 14.871965
+      type: 'test'
+      ...
+    # Subtest: ends the trip, which then shows as arrived and takes no more positions
+    ok 9 - ends the trip, which then shows as arrived and takes no more positions
+      ---
+      duration_ms: 9.270356
+      type: 'test'
+      ...
+    1..9
+ok 3 - a live trip, from the driver's phone to the rider's screen
+  ---
+  duration_ms: 596.372451
+  type: 'suite'
+  ...
+# Subtest: admin: assignments, buses, drivers and days
+    # Subtest: re-assigns a driver, records the change and tells the new driver
+    ok 1 - re-assigns a driver, records the change and tells the new driver
+      ---
+      duration_ms: 121.357392
+      type: 'test'
+      ...
+    # Subtest: refuses to re-assign a trip that has started, or to use a user who is not a driver, or a bus in maintenance
+    ok 2 - refuses to re-assign a trip that has started, or to use a user who is not a driver, or a bus in maintenance
+      ---
+      duration_ms: 13.685416
+      type: 'test'
+      ...
+    # Subtest: refuses to give a driver two overlapping trips
+    ok 3 - refuses to give a driver two overlapping trips
+      ---
+      duration_ms: 7.02881
+      type: 'test'
+      ...
+    # Subtest: blocks a driver from starting a trip whose bus is in maintenance
+    ok 4 - blocks a driver from starting a trip whose bus is in maintenance
+      ---
+      duration_ms: 144.049942
+      type: 'test'
+      ...
+    # Subtest: cancels a trip once, and creates the runs of a new day (not on Friday)
+    ok 5 - cancels a trip once, and creates the runs of a new day (not on Friday)
+      ---
+      duration_ms: 14.958574
+      type: 'test'
+      ...
+    # Subtest: adds a driver with a login, adds a bus, and changes what riders can see
+    ok 6 - adds a driver with a login, adds a bus, and changes what riders can see
+      ---
+      duration_ms: 274.391527
+      type: 'test'
+      ...
+    1..6
+ok 4 - admin: assignments, buses, drivers and days
+  ---
+  duration_ms: 664.345567
+  type: 'suite'
+  ...
+# Subtest: rider alerts
+    # Subtest: creates, updates, lists and deletes an alert, and validates the input
+    ok 1 - creates, updates, lists and deletes an alert, and validates the input
+      ---
+      duration_ms: 116.508934
+      type: 'test'
+      ...
+    1..1
+ok 5 - rider alerts
+  ---
+  duration_ms: 116.63325
+  type: 'suite'
+  ...
+1..5
+# tests 25
+# suites 5
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4232.25669

@@ -40,8 +40,10 @@ export async function loadLive(ctx, run, { stopId } = {}) {
   const { rows } = await ctx.pool.query(
     `select "timestamp", lat, lon, speed_kmh from gps_pings
       where trip_run_id = $1 order by "timestamp" desc limit 6`, [run.id]);
+  const avg = await ctx.pool.query(
+    'select avg(speed_kmh)::float as avg from gps_pings where trip_run_id = $1', [run.id]);
   const stop = stopId ? route.stops.find((s) => s.id === Number(stopId)) ?? null : null;
-  return computeLive({ run, route: route.geo, pings: rows.reverse(), stop });
+  return computeLive({ run, route: route.geo, pings: rows.reverse(), stop, avgSpeedKmh: avg.rows[0].avg });
 }
 
 /** The trip run as the apps see it. Riders only see a driver's phone number if the admin allows it. */

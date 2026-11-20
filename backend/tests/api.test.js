@@ -90,6 +90,20 @@ describe('timetable and privacy', () => {
     assert.equal(run.bus.number, '04');
     assert.equal(run.live.statusLabel, 'Not started');
   });
+  it('lists only the driver\'s own trips for the driver app, and lets the driver read a trip\'s live state', async () => {
+    const drv = await login('driver1');
+    const mine = await call('GET', '/driver/runs?date=2026-10-08', { token: drv });
+    assert.equal(mine.status, 200);
+    assert.ok(mine.body.runs.length >= 1);
+    assert.ok(mine.body.runs.every((x) => x.driver.name === 'Ahmed Hassan'));
+    assert.ok(mine.body.runs.some((x) => x.id === RUN));
+    const other = await call('GET', '/driver/runs?date=2026-10-08', { token: await login('driver2') });
+    assert.ok(!other.body.runs.some((x) => x.id === RUN));
+    const live = await call('GET', `/runs/${RUN}/live`, { token: drv });
+    assert.equal(live.status, 200);
+    assert.equal(live.body.status, 'scheduled');
+    assert.equal((await call('GET', '/driver/runs', { token: await login('student01') })).status, 403);
+  });
   it('marks finished and cancelled trips', async () => {
     const rider = await login('student01');
     const done = await call('GET', '/runs/26/live', { token: rider });
@@ -162,7 +176,7 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
       etas.push(m.etaMinutes);
     }
     assert.deepEqual(etas, [...etas].sort((a, b) => b - a), `ETA should fall: ${etas}`);
-    assert.ok(etas[0] >= 33 && etas[0] <= 39, `first ETA about 36 min (mostly the planned speed), got ${etas[0]}`);
+    assert.ok(etas[0] >= 30 && etas[0] <= 36, `first ETA about 33 min (planned and measured speed mixed), got ${etas[0]}`);
     assert.ok(etas[2] >= 14 && etas[2] <= 16, `half way: about 15 min, got ${etas[2]}`);
     assert.ok(etas[4] <= 1, `almost there: ${etas[4]}`);
   });
@@ -184,9 +198,11 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
     assert.equal(r.body.ok, true);
   });
 
-  it('says "Delayed" when the bus crawls', async () => {
+  it('says "Delayed" when the bus crawls for five minutes', async () => {
+    // The ETA uses the average speed since departure, so a short stop does not flip the label;
+    // five minutes at 8 km/h pulls the average down far enough to make the bus late.
     let last;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 10; i++) {
       const event = once(riderSock, 'bus:position');
       await emitAck(driverSock, 'driver:ping', ping(0.4, 8, 300 + i * 30));
       last = await event;
