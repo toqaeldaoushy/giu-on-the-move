@@ -173,7 +173,25 @@ export async function recordPing(ctx, user, runId, payload) {
     progress: live.progress, remainingKm: live.remainingKm,
   });
   await sendDueAlerts(ctx, run);
+  await sendDelayNotice(ctx, run, live);
   return { ok: true, id: ins.rows[0].id, live };
+}
+
+/**
+ * Delay alerts: the first time a trip turns "Delayed", every rider who set a reminder for it is told
+ * once ("trip:delayed"), so that riders waiting for this bus learn about the delay without opening it.
+ */
+async function sendDelayNotice(ctx, run, live) {
+  if (live.statusLabel !== 'Delayed') return;
+  ctx.delayNoticed ??= new Set();
+  if (ctx.delayNoticed.has(run.id)) return;
+  ctx.delayNoticed.add(run.id);
+  const { rows } = await ctx.pool.query('select distinct user_id from alerts where trip_run_id = $1', [run.id]);
+  for (const r of rows) {
+    ctx.io?.to(`user:${r.user_id}`).emit('trip:delayed', {
+      runId: run.id, label: run.label, scheduledTime: String(run.scheduled_time).slice(0, 5), delayMinutes: live.delayMinutes,
+    });
+  }
 }
 
 /**

@@ -15,6 +15,19 @@ function niceDate(iso) {
 
 const timeOf = (stamp) => (stamp ? String(stamp).slice(11, 16) : '');
 
+// Server times are Cairo wall-clock times without a zone; reading both sides the same way keeps the difference right.
+const wallMs = (stamp) => Date.parse(`${stamp}Z`);
+
+/** "Leaves in 12 min" for a trip that has not started, counted from the server's clock. */
+function countdownText(run, data, fetchedAt) {
+  if (run.status !== 'scheduled' || !data?.now) return null;
+  const now = wallMs(data.now) + (Date.now() - fetchedAt);
+  const minutes = Math.ceil((wallMs(`${data.date}T${run.scheduledTime}:00`) - now) / 60000);
+  if (minutes <= 0) return 'Due to leave now';
+  if (minutes < 60) return `Leaves in ${minutes} min`;
+  return `Leaves in ${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} min`;
+}
+
 function tripLine(run) {
   const live = run.live ?? {};
   if (run.status === 'in_progress') return live.etaMinutes != null ? `On the road · arrives in ${live.etaMinutes} min` : 'On the road';
@@ -29,11 +42,14 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
   const [alerts, setAlerts] = useState([]);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchedAt, setFetchedAt] = useState(0);   // when the server's time was read
+  const [, setTick] = useState(0);                 // re-draws the countdown every 15 seconds
 
   const load = useCallback(async () => {
     try {
       const [tt, al] = await Promise.all([api('/timetable', { token }), api('/alerts', { token })]);
       setData(tt);
+      setFetchedAt(Date.now());
       setAlerts(al.alerts.filter((a) => a.date === tt.date));
       setError('');
     } catch (e) {
@@ -46,6 +62,11 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
     const timer = setInterval(load, 30000); // keep the list fresh while the screen is open
     return () => clearInterval(timer);
   }, [load]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 15000);
+    return () => clearInterval(timer);
+  }, []);
 
   async function refresh() {
     setRefreshing(true);
@@ -101,6 +122,7 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
               <Text style={styles.nextTime}>{next.scheduledTime}</Text>
               <StatusBadge label={next.live?.statusLabel ?? 'Not started'} />
             </View>
+            {countdownText(next, data, fetchedAt) && <Text style={styles.countdown}>{countdownText(next, data, fetchedAt)}</Text>}
             <Text style={styles.nextTitle}>{next.label}</Text>
             <Text style={styles.muted}>{tripLine(next)}</Text>
             <Text style={styles.link}>Track this bus ›</Text>
@@ -159,6 +181,7 @@ const styles = StyleSheet.create({
   nextLabel: { fontSize: 12, fontWeight: '700', color: colors.primary, letterSpacing: 1 },
   nextTime: { fontSize: 34, fontWeight: '700', color: colors.text, marginRight: 12 },
   nextTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: 4 },
+  countdown: { fontSize: 15, fontWeight: '700', color: colors.primary, marginTop: 2 },
   link: { color: colors.primary, fontWeight: '600', marginTop: 10 },
   section: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 20, marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center' },

@@ -196,7 +196,7 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
           </View>
           {alert && (
             <Text style={styles.muted}>
-              Reminder saved: {alert.minutesBefore} min before {stopName}.{' '}
+              You will get a notification about {alert.minutesBefore} min before the bus reaches {stopName}. Keep the app open or in the background.{' '}
               <Text style={{ color: colors.danger }} onPress={removeReminder}>Remove</Text>
             </Text>
           )}

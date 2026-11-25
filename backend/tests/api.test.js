@@ -221,7 +221,12 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
     assert.equal(r.body.ok, true);
   });
 
-  it('says "Delayed" when the bus crawls for twenty minutes', async () => {
+  it('says "Delayed" when the bus crawls for twenty minutes, and tells riders with a reminder once', async () => {
+    const reminder = await call('POST', '/alerts', { token: riderToken, body: { runId: RUN, stopId: route.stops[0].id, minutesBefore: 2 } });
+    assert.equal(reminder.status, 201);
+    const delays = [];
+    const onDelay = (m) => delays.push(m);
+    riderSock.on('trip:delayed', onDelay);
     // The ETA uses the average speed since departure, so a short stop does not flip the label;
     // twenty minutes at 5 km/h pulls the average down far enough to make the bus late on the 71-minute plan.
     let last;
@@ -232,6 +237,12 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
     }
     assert.equal(last.statusLabel, 'Delayed');
     assert.ok(last.delayMinutes > 5);
+    await new Promise((r) => setTimeout(r, 200));
+    riderSock.off('trip:delayed', onDelay);
+    assert.equal(delays.length, 1, `one delay notice expected, got ${delays.length}`);
+    assert.equal(delays[0].runId, RUN);
+    assert.ok(delays[0].delayMinutes > 5);
+    assert.equal((await call('DELETE', `/alerts/${reminder.body.id}`, { token: riderToken })).status, 200);
   });
 
   it('gives the ETA to a rider\'s stop and knows when the bus has passed it', async () => {
