@@ -7,7 +7,7 @@ import { login, requireAuth, requireRole } from './auth.js';
 import { formatLocal, dateOf, parseLocal } from './time.js';
 import {
   RUN_SELECT, CHANGE_JOIN, getRun, getRunOr404, getRoute, loadLive, loadLiveMany, runDto,
-  startRun, endRun, recordPing, reportProblem, changeAssignment, setOccupancy,
+  startRun, endRun, recordPing, reportProblem, changeAssignment, setOccupancy, ensureDayRuns, punctuality,
 } from './runs.js';
 
 const DAY_OFF = 5; // Friday (JavaScript: Sunday = 0 ... Friday = 5)
@@ -78,6 +78,7 @@ export function createApp(ctx) {
   // The timetable of one day, with the live state of each trip; ?routeId= keeps one line only
   api.get('/timetable', async (req, res) => {
     const date = dateParam(req);
+    if (date === today()) await ensureDayRuns(ctx, date);
     const routeId = req.query.routeId ? toInt(req.query.routeId, 'routeId') : null;
     const { rows } = await ctx.pool.query(
       `${RUN_SELECT} where r.run_date = $1 and ($2::int is null or t.route_id = $2) order by scheduled_time`, [date, routeId]);
@@ -152,6 +153,29 @@ export function createApp(ctx) {
     res.json({ ok: true });
   });
 
+  // Trip feedback: a rider rates a finished trip once (sending again changes the rating)
+  api.get('/runs/:id/feedback', rider, async (req, res) => {
+    const { rows } = await ctx.pool.query(
+      'select rating, comment, created_at as "createdAt" from trip_feedback where user_id = $1 and trip_run_id = $2',
+      [req.user.id, toInt(req.params.id, 'id')]);
+    res.json({ feedback: rows[0] ?? null });
+  });
+
+  api.post('/runs/:id/feedback', rider, async (req, res) => {
+    const runId = toInt(req.params.id, 'id');
+    const rating = toInt(req.body?.rating, 'rating');
+    if (rating < 1 || rating > 5) throw new HttpError(400, 'rating must be from 1 to 5');
+    const comment = req.body?.comment ? String(req.body.comment).trim().slice(0, 300) || null : null;
+    const run = await getRunOr404(ctx.pool, runId);
+    if (run.status !== 'completed') throw new HttpError(409, 'You can rate a trip once it has arrived');
+    const { rows } = await ctx.pool.query(
+      `insert into trip_feedback (user_id, trip_run_id, rating, comment, created_at) values ($1, $2, $3, $4, $5)
+       on conflict (user_id, trip_run_id) do update set rating = excluded.rating, comment = excluded.comment, created_at = excluded.created_at
+       returning rating, comment, created_at as "createdAt"`,
+      [req.user.id, runId, rating, comment, formatLocal(ctx.clock())]);
+    res.status(201).json({ feedback: rows[0] });
+  });
+
   api.post('/runs/:id/full-report', rider, async (req, res) => {
     const runId = toInt(req.params.id, 'id');
     const run = await getRunOr404(ctx.pool, runId);
@@ -171,6 +195,7 @@ export function createApp(ctx) {
 
   api.get('/driver/runs', driver, async (req, res) => {
     const date = dateParam(req);
+    if (date === today()) await ensureDayRuns(ctx, date);
     const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 and r.driver_id = $2 order by scheduled_time`, [date, req.user.id]);
     res.json({ date, runs: rows.map((r) => runDto(r, 'driver')) });
   });
@@ -188,6 +213,7 @@ export function createApp(ctx) {
 
   admin.get('/overview', async (req, res) => {
     const date = dateParam(req);
+    if (date === today()) await ensureDayRuns(ctx, date);
     const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 order by scheduled_time`, [date]);
     const lives = await loadLiveMany(ctx, rows);
     const runs = rows.map((row, i) => runDto(row, 'admin', lives[i]));
@@ -381,6 +407,22 @@ export function createApp(ctx) {
     if (!r.rowCount) throw new HttpError(404, 'Announcement not found or already ended');
     ctx.io?.emit('announcement:ended', { id });
     res.json({ ok: true });
+  });
+
+  // Punctuality and ratings over the last days (default 7, at most 60)
+  admin.get('/punctuality', async (req, res) => {
+    const days = req.query.days ? toInt(req.query.days, 'days') : 7;
+    if (days < 1 || days > 60) throw new HttpError(400, 'days must be from 1 to 60');
+    res.json(await punctuality(ctx, today(), days));
+  });
+
+  admin.get('/feedback', async (req, res) => {
+    const { rows } = await ctx.pool.query(
+      `select f.id, f.rating, f.comment, f.created_at as "createdAt", r.run_date as date, t.label,
+              to_char(coalesce(sc.new_time, t.scheduled_time), 'HH24:MI') as "scheduledTime"
+         from trip_feedback f join trip_runs r on r.id = f.trip_run_id join trips t on t.id = r.trip_id ${CHANGE_JOIN}
+        order by f.created_at desc limit 30`);
+    res.json({ feedback: rows });
   });
 
   admin.get('/reports', async (req, res) => {

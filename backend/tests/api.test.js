@@ -447,6 +447,12 @@ describe('seat availability, next shuttle and announcements', () => {
     assert.equal(ok.status, 200);
     const seen = (await call('GET', `/runs/${run.id}/live`, { token: rider })).body;
     assert.equal(seen.occupancy.level, 'few');
+    const office = await connect(admin);
+    const full = once(office, 'seats:full');
+    assert.equal((await call('POST', `/driver/runs/${run.id}/occupancy`, { token: drv, body: { level: 'full' } })).status, 200);
+    const told = await full;                                         // the office is told so it can send another bus
+    assert.equal(told.runId, run.id);
+    assert.ok(told.label && told.scheduledTime);
     assert.equal((await call('POST', `/driver/runs/${run.id}/end`, { token: drv })).status, 200);
     assert.equal((await call('GET', `/runs/${run.id}/live`, { token: rider })).body.occupancy, null); // only shown during the trip
   });
@@ -478,5 +484,69 @@ describe('seat availability, next shuttle and announcements', () => {
     assert.equal((await ended).id, made.body.id);
     assert.equal((await call('GET', '/announcements', { token: rider })).body.announcements.length, 0);
     assert.equal((await call('POST', `/admin/announcements/${made.body.id}/end`, { token: admin })).status, 404);
+  });
+});
+
+describe('automatic daily trips, trip feedback and punctuality', () => {
+  let admin; let rider;
+  before(async () => { admin = await login('admin'); rider = await login('student01'); });
+
+  it('creates a new day\'s trips from the timetable with the usual bus and driver, and none on Friday', async () => {
+    const at = (iso) => {                         // a second server whose clock shows another day
+      const s = createServer({ pool: createPool(), clock: () => parseLocal(iso) });   // its own pool: closing it ends that pool
+      return s.listen(0).then((port) => ({ s, url: `http://127.0.0.1:${port}/api` }));
+    };
+    const get = async (url, path, token) => (await fetch(`${url}${path}`, { headers: { Authorization: `Bearer ${token}` } })).json();
+
+    const sunday = await at('2026-10-11T07:00:00');
+    const tt = await get(sunday.url, '/timetable', rider);
+    assert.equal(tt.date, '2026-10-11');
+    assert.equal(tt.runs.length, 5);
+    for (const r of tt.runs) {
+      const last = (await pool.query(
+        `select bus_id, driver_id from trip_runs r join trips t on t.id = r.trip_id
+          where t.code = $1 and r.run_date < '2026-10-11' and r.bus_id is not null order by r.run_date desc limit 1`, [r.tripCode])).rows[0];
+      assert.equal(r.bus?.id, last.bus_id);       // the bus and driver it had the last time it ran
+      assert.equal(r.driver?.id, last.driver_id);
+    }
+    assert.equal((await get(sunday.url, '/timetable', rider)).runs.length, 5);   // asked again: nothing doubled
+    await sunday.s.close();
+
+    const friday = await at('2026-10-16T07:00:00');
+    assert.equal((await get(friday.url, '/timetable', rider)).runs.length, 0);
+    await friday.s.close();
+    await pool.query(`delete from trip_runs where run_date = '2026-10-11'`);
+  });
+
+  it('lets a rider rate a trip that has arrived, once, and shows it to the office', async () => {
+    const done = (await pool.query(
+      `select r.id from trip_runs r join trips t on t.id = r.trip_id where r.run_date = '2026-10-08' and t.scheduled_time = '08:00'`)).rows[0].id;
+    const notYet = (await pool.query(`select id from trip_runs where status = 'scheduled' limit 1`)).rows[0].id;
+    assert.equal((await call('POST', `/runs/${done}/feedback`, { token: rider, body: { rating: 6 } })).status, 400);
+    assert.equal((await call('POST', `/runs/${notYet}/feedback`, { token: rider, body: { rating: 4 } })).status, 409);
+    assert.equal((await call('POST', `/runs/${done}/feedback`, { token: admin, body: { rating: 4 } })).status, 403);
+    assert.equal((await call('POST', `/runs/${done}/feedback`, { token: rider, body: { rating: 3 } })).status, 201);
+    const again = await call('POST', `/runs/${done}/feedback`, { token: rider, body: { rating: 4, comment: 'Clean bus, a bit late' } });
+    assert.equal(again.body.feedback.rating, 4);                    // sending again changes the rating
+    assert.equal((await call('GET', `/runs/${done}/feedback`, { token: rider })).body.feedback.comment, 'Clean bus, a bit late');
+    const list = (await call('GET', '/admin/feedback', { token: admin })).body.feedback;
+    assert.equal(list.length, 1);
+    assert.equal(list[0].rating, 4);
+  });
+
+  it('reports on-time, late and cancelled trips for the last days, with the riders\' rating', async () => {
+    assert.equal((await call('GET', '/admin/punctuality?days=0', { token: rider })).status, 403);
+    assert.equal((await call('GET', '/admin/punctuality?days=0', { token: admin })).status, 400);
+    const rep = (await call('GET', '/admin/punctuality?days=7', { token: admin })).body;
+    assert.equal(rep.from, '2026-10-02');
+    assert.equal(rep.trips.length, 5);
+    const t1530 = rep.trips.find((x) => x.scheduledTime === '15:30');
+    assert.ok(t1530.late >= 1);                                     // 4 October: arrived 22 minutes after plan
+    assert.ok(t1530.worstDelayMin >= 20);
+    const t1730 = rep.trips.find((x) => x.scheduledTime === '17:30');
+    assert.ok(t1730.cancelled >= 1);                                // 7 October was cancelled
+    assert.equal(rep.trips.find((x) => x.scheduledTime === '08:00').averageRating, 4);
+    assert.equal(rep.totals.runs, rep.totals.onTime + rep.totals.late + rep.totals.cancelled);
+    assert.ok(rep.totals.onTimeRate > 0 && rep.totals.onTimeRate <= 100);
   });
 });

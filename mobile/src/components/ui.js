@@ -23,9 +23,11 @@ export function useTextDir() {
       writingDirection: 'rtl',
       letterSpacing: 0,
       textTransform: 'none',
-      // On phones the right-to-left layout already starts text on the right (and would turn 'right' into left);
-      // only the web preview needs the alignment spelled out
-      ...(align && !flat.textAlign && Platform.OS === 'web' ? { textAlign: 'right' } : {}),
+      // Cairo is taller than Plus Jakarta Sans: without more line height the tops of letters and digits are cut off
+      ...(flat.lineHeight ? { lineHeight: Math.round((flat.fontSize ?? 15) * 1.5) } : {}),
+      // Inside a right-to-left layout the phone swaps left and right, so 'left' puts the text on the right.
+      // The web preview does not swap, so it needs 'right'.
+      ...(align && !flat.textAlign ? { textAlign: Platform.OS === 'web' ? 'right' : 'left' } : {}),
     }];
   };
 }

@@ -6,6 +6,7 @@ import { directionText, radius, space, useStyles, useTheme } from '../theme';
 import { Button, ErrorText, Header, HeroCard, SEATS, SectionLabel, StatusBadge, T, Tile, seatsColor } from '../components/ui';
 import BusMap from '../components/BusMap';
 import { getFavoriteStop, setFavoriteStop } from '../favorites';
+import TripFeedback from '../components/TripFeedback';
 
 const timeOf = (stamp) => (stamp ? String(stamp).slice(11, 16) : '');
 
@@ -230,6 +231,13 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
                 <T v="caption" color={t.red} onPress={removeReminder} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Remove</T>
               </T>
             )}
+          </>
+        )}
+
+        {run.status === 'completed' && (
+          <>
+            <SectionLabel>Your rating</SectionLabel>
+            <TripFeedback token={token} runId={run.id} />
           </>
         )}
 

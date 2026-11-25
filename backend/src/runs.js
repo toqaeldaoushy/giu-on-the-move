@@ -323,5 +323,93 @@ export async function setOccupancy(ctx, user, runId, level) {
   const at = formatLocal(ctx.clock());
   await ctx.pool.query('update trip_runs set occupancy = $2, occupancy_at = $3 where id = $1', [runId, level, at]);
   ctx.io?.to(`run:${runId}`).to('admin').emit('trip:occupancy', { runId, level, at });
+  // A full bus needs the office: riders further along the route cannot board, so another bus may be needed
+  if (level === 'full' && run.occupancy !== 'full') {
+    const live = await loadLive(ctx, run);
+    ctx.io?.to('admin').emit('seats:full', {
+      runId, at, label: run.label, scheduledTime: String(run.scheduled_time).slice(0, 5),
+      busNumber: run.bus_number, driverName: run.driver_name, remainingKm: live?.remainingKm ?? null,
+    });
+  }
   return { ok: true, level, at };
+}
+
+// ---- Automatic daily trips --------------------------------------------------------------------
+
+const FRIDAY = 5;
+
+/**
+ * Creates the day's trips from the weekly timetable (Saturday to Thursday), each with the bus and driver it had
+ * the last time it ran; nothing has to be entered by hand. A bus in maintenance is left out, so the office assigns
+ * another. Trips that already exist are not touched. Checked once per day and server.
+ */
+export async function ensureDayRuns(ctx, date) {
+  ctx.ensuredDays ??= new Set();
+  if (ctx.ensuredDays.has(date)) return 0;
+  if (new Date(parseLocal(date)).getUTCDay() === FRIDAY) { ctx.ensuredDays.add(date); return 0; }
+  const { rows } = await ctx.pool.query(
+    `insert into trip_runs (trip_id, run_date, status, bus_id, driver_id)
+     select t.id, $1::date, 'scheduled',
+            (select r.bus_id from trip_runs r join buses b on b.id = r.bus_id
+              where r.trip_id = t.id and r.run_date < $1::date and b.status = 'active'
+              order by r.run_date desc limit 1),
+            (select r.driver_id from trip_runs r
+              where r.trip_id = t.id and r.run_date < $1::date and r.driver_id is not null
+              order by r.run_date desc limit 1)
+       from trips t
+     on conflict (trip_id, run_date) do nothing
+     returning id`, [date]);
+  ctx.ensuredDays.add(date);
+  return rows.length;
+}
+
+// ---- Punctuality report ---------------------------------------------------------------------------
+
+/**
+ * For each trip of the timetable over the last `days` days up to `today`: how many runs arrived on time, late or
+ * were cancelled, using the same rule as the live status (late = arrived more than LATE_THRESHOLD_MIN after the
+ * scheduled time plus the planned trip time), and the riders' average rating.
+ */
+export async function punctuality(ctx, today, days) {
+  const from = formatLocal(parseLocal(today) - (days - 1) * 86400000).slice(0, 10);
+  const { rows } = await ctx.pool.query(
+    `select t.id as trip_id, t.label, t.code, t.direction, t.route_id, to_char(t.scheduled_time, 'HH24:MI') as usual_time,
+            r.status, r.run_date, coalesce(sc.new_time, t.scheduled_time) as scheduled_time, r.actual_end,
+            (select avg(f.rating)::float from trip_feedback f where f.trip_run_id = r.id) as rating,
+            (select count(*)::int from trip_feedback f where f.trip_run_id = r.id) as ratings
+       from trip_runs r join trips t on t.id = r.trip_id ${CHANGE_JOIN}
+      where r.run_date between $1::date and $2::date and r.status in ('completed', 'cancelled')
+      order by t.route_id, t.scheduled_time`, [from, today]);
+  const byTrip = new Map();
+  for (const row of rows) {
+    const k = row.trip_id;
+    if (!byTrip.has(k)) {
+      byTrip.set(k, { tripId: k, label: row.label, tripCode: row.code, direction: row.direction, routeId: row.route_id,
+        scheduledTime: row.usual_time, runs: 0, onTime: 0, late: 0, cancelled: 0, delays: [], ratingSum: 0, ratings: 0 });
+    }
+    const e = byTrip.get(k);
+    e.runs += 1;
+    if (row.status === 'cancelled') { e.cancelled += 1; continue; }
+    if (row.actual_end) {
+      const planned = parseLocal(`${row.run_date}T${row.scheduled_time}`) + config.plannedTripMin * 60000;
+      const delay = Math.round((parseLocal(row.actual_end) - planned) / 60000);
+      e.delays.push(delay);
+      if (delay > config.lateThresholdMin) e.late += 1; else e.onTime += 1;
+    }
+    if (row.ratings) { e.ratingSum += row.rating * row.ratings; e.ratings += row.ratings; }
+  }
+  const trips = [...byTrip.values()].map(({ delays, ratingSum, ...e }) => ({
+    ...e,
+    averageDelayMin: delays.length ? Math.round(delays.reduce((a, b) => a + b, 0) / delays.length) : null,
+    worstDelayMin: delays.length ? Math.max(...delays) : null,
+    averageRating: e.ratings ? Math.round((ratingSum / e.ratings) * 10) / 10 : null,
+  }));
+  const sum = (f) => trips.reduce((a, x) => a + x[f], 0);
+  const arrived = sum('onTime') + sum('late');
+  return {
+    from, to: today, days, lateThresholdMin: config.lateThresholdMin, plannedTripMin: config.plannedTripMin,
+    totals: { runs: sum('runs'), onTime: sum('onTime'), late: sum('late'), cancelled: sum('cancelled'),
+      onTimeRate: arrived ? Math.round((sum('onTime') / arrived) * 100) : null },
+    trips,
+  };
 }

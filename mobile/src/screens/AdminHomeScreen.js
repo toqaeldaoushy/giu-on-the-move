@@ -3,10 +3,11 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { api, connectLive } from '../api';
 import { directionText, font, radius, space, useStyles, useTheme } from '../theme';
 import { Armchair, BusFront, CalendarClock, Clock, MapPin } from 'lucide-react-native';
-import { Card, ErrorText, Header, SEATS, TripRow, seatsColor } from '../components/ui';
+import { Card, ErrorText, Header, SEATS, Segmented, TripRow, seatsColor } from '../components/ui';
 import ProfileMenu from '../components/ProfileMenu';
 import AdminTimetable from '../components/AdminTimetable';
 import AdminAnnouncements from '../components/AdminAnnouncements';
+import AdminPunctuality from '../components/AdminPunctuality';
 
 const PROBLEM_TEXT = { traffic_delay: 'Traffic delay', breakdown: 'Breakdown', bus_full: 'Bus is full', other: 'Other problem' };
 const timeOf = (stamp) => (stamp ? String(stamp).slice(11, 16) : '');
@@ -29,6 +30,7 @@ export default function AdminHomeScreen({ session, onOpenTrip, onLogout }) {
   const { token, user } = session;
   const [tab, setTab] = useState('trips');
   const [menu, setMenu] = useState(false);
+  const [reportView, setReportView] = useState('today');
   const [overview, setOverview] = useState(null);
   const [reports, setReports] = useState(null);
   const [unread, setUnread] = useState(0);
@@ -153,6 +155,17 @@ export default function AdminHomeScreen({ session, onOpenTrip, onLogout }) {
       {tab === 'notices' && <AdminAnnouncements token={token} />}
 
       {tab === 'reports' && (
+        <View style={{ marginBottom: space.m }}>
+          <Segmented
+            value={reportView}
+            onChange={setReportView}
+            options={[{ value: 'today', label: 'Today' }, { value: 'punctuality', label: 'Punctuality and ratings' }]}
+          />
+        </View>
+      )}
+      {tab === 'reports' && reportView === 'punctuality' && <AdminPunctuality token={token} />}
+
+      {tab === 'reports' && reportView === 'today' && (
         <>
           {reports && allReports.length === 0 && (
             <Card><Text style={styles.muted}>No reports today. New reports from drivers and riders appear here.</Text></Card>
