@@ -1,0 +1,133 @@
+{
+  "route_name": "First Settlement line (Gate 2, El Nakhl to GIU)",
+  "source_file": "trip1_2026-11-22.gpx",
+  "recorded_points": 2703,
+  "route_points": 291,
+  "length_km": 45.0,
+  "estimated_km": 4.75,
+  "trip_start_local": "2026-11-22 06:33:39",
+  "trip_end_local": "2026-11-22 07:44:58",
+  "trip_minutes": 71.3,
+  "not_recorded": {
+    "from_local": "06:34:32",
+    "to_local": "06:56:06",
+    "minutes": 21.6
+  },
+  "stops": [
+    {
+      "seq": 1,
+      "name": "Gate 2 (El Nakhl)",
+      "lat": 30.052812,
+      "lon": 31.427338,
+      "km": 0.0,
+      "source": "recorded"
+    },
+    {
+      "seq": 2,
+      "name": "Stop 2",
+      "lat": 30.067194,
+      "lon": 31.475227,
+      "km": 7.22,
+      "source": "placed"
+    },
+    {
+      "seq": 3,
+      "name": "Stop 3",
+      "lat": 30.077075,
+      "lon": 31.49134,
+      "km": 9.41,
+      "source": "placed"
+    },
+    {
+      "seq": 4,
+      "name": "Stop 4",
+      "lat": 30.074598,
+      "lon": 31.506615,
+      "km": 10.94,
+      "source": "placed"
+    },
+    {
+      "seq": 5,
+      "name": "Stop 5",
+      "lat": 30.061131,
+      "lon": 31.517447,
+      "km": 14.22,
+      "source": "recorded"
+    },
+    {
+      "seq": 6,
+      "name": "Stop 6",
+      "lat": 30.066798,
+      "lon": 31.527865,
+      "km": 16.0,
+      "source": "placed"
+    },
+    {
+      "seq": 7,
+      "name": "Stop 7",
+      "lat": 30.053758,
+      "lon": 31.532889,
+      "km": 17.88,
+      "source": "placed"
+    },
+    {
+      "seq": 8,
+      "name": "Stop 8",
+      "lat": 30.045995,
+      "lon": 31.538705,
+      "km": 19.88,
+      "source": "placed"
+    },
+    {
+      "seq": 9,
+      "name": "Stop 9",
+      "lat": 30.026704,
+      "lon": 31.533198,
+      "km": 23.43,
+      "source": "recorded"
+    },
+    {
+      "seq": 10,
+      "name": "Stop 10",
+      "lat": 30.026763,
+      "lon": 31.557314,
+      "km": 25.82,
+      "source": "placed"
+    },
+    {
+      "seq": 11,
+      "name": "Stop 11",
+      "lat": 30.026648,
+      "lon": 31.579251,
+      "km": 27.93,
+      "source": "placed"
+    },
+    {
+      "seq": 12,
+      "name": "Stop 12",
+      "lat": 30.022803,
+      "lon": 31.591319,
+      "km": 29.2,
+      "source": "placed"
+    },
+    {
+      "seq": 13,
+      "name": "GIU campus",
+      "lat": 30.005307,
+      "lon": 31.700756,
+      "km": 45.0,
+      "source": "recorded"
+    }
+  ],
+  "pickup_halts": [
+    {
+      "at_local": "07:08:19",
+      "seconds": 80
+    },
+    {
+      "at_local": "07:20:56",
+      "seconds": 120
+    }
+  ],
+  "method": "Recorded stops = the start, the end and places where the recorded bus stood still for at least 60 s; placed stops = points on the recorded route at km [7.2, 9.1, 10.9, 16.1, 18.0, 19.9, 25.3, 27.3, 29.2]; path simplified with a 5 m tolerance; the not-recorded part is a straight line."
+}

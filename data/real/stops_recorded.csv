@@ -1,0 +1,5 @@
+id,route_id,name,lat,lon,seq,source
+1,1,Gate 2 (El Nakhl),30.052812,31.427338,1,recorded
+5,1,Stop 5,30.061131,31.517447,5,recorded
+9,1,Stop 9,30.026704,31.533198,9,recorded
+13,1,GIU campus,30.005307,31.700756,13,recorded

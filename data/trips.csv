@@ -1,6 +1,6 @@
 id,code,label,route_id,direction,scheduled_time
 1,arrival_first,Morning inbound,1,inbound,08:00
 2,arrival_second,Mid-morning inbound,1,inbound,10:00
-3,departure_first,Afternoon express (short round),1,outbound,13:45
+3,departure_first,Afternoon departure,1,outbound,13:45
 4,departure_second,Evening departure,1,outbound,15:30
 5,departure_third,Late evening departure,1,outbound,17:30

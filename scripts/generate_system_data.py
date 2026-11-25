@@ -4,8 +4,11 @@ GIU on the Move: system data generator
 Generates simulated data for ALL THREE ROLES (rider, driver, admin) and loads it
 into a SQLite database.
 
-What is REAL:        the timetable (5 trips: 08:00, 10:00, 13:45, 15:30, 17:30).
-What is PLACEHOLDER: names, plates, phone numbers, the route and the stops.
+What is REAL:        the timetable (5 trips: 08:00, 10:00, 13:45, 15:30, 17:30), and the route and stops,
+                     taken from a GPS trip recorded on a real GIU shuttle (data/real/, built by
+                     scripts/build_real_route.py; its first 4.75 km were not recorded and are estimated).
+                     The planned trip time (71 min) is that recorded trip's duration.
+What is PLACEHOLDER: names, plates and phone numbers.
 What is SIMULATED:   assignments, GPS pings, delays, reports and alerts.
 
 Usage (from the project folder):
@@ -37,20 +40,27 @@ SEED = 42
 OPERATING_DAYS = 6                      # Saturday to Thursday (Friday is the day off)
 PING_INTERVAL_S = 30                    # a phone reporting every 30 seconds
 GPS_NOISE_M = 8                         # consumer GPS imprecision
-TRIP_DURATION_MIN = 40                  # placeholder one-way travel time
+TRIP_DURATION_MIN = 71                  # one-way travel time of the recorded real trip (06:33 to 07:45)
 SNAPSHOT_TIME = "13:40"                 # "now" on the last day: the 13:45 trip has not left yet
 
-# ---- Placeholder route (REPLACE with the real pickup point and campus gate) --
-ROUTE_START = (30.0500, 31.3310)        # placeholder pickup point (Cairo side)
-ROUTE_END = (30.0250, 31.7450)          # placeholder campus gate (New Administrative Capital)
-N_ROUTE_POINTS = 41
+# ---- The real route (from data/real/, listed in the inbound direction) -------
+REAL_DIR = ROOT / "data" / "real"
+ROUTE_NAME = "First Settlement line (Gate 2, El Nakhl to GIU)"
+
+
+def read_real_route():
+    with open(REAL_DIR / "route_points.csv", newline="") as f:
+        path = [(float(r["lat"]), float(r["lon"])) for r in csv.DictReader(f)]
+    with open(REAL_DIR / "stops.csv", newline="") as f:
+        stops = [(r["name"], float(r["lat"]), float(r["lon"])) for r in csv.DictReader(f)]
+    return path, stops
 
 # ---- The REAL timetable ------------------------------------------------------
 TRIPS = [
     # id, code, label, direction, scheduled_time
     (1, "arrival_first", "Morning inbound", "inbound", "08:00"),
     (2, "arrival_second", "Mid-morning inbound", "inbound", "10:00"),
-    (3, "departure_first", "Afternoon express (short round)", "outbound", "13:45"),
+    (3, "departure_first", "Afternoon departure", "outbound", "13:45"),
     (4, "departure_second", "Evening departure", "outbound", "15:30"),
     (5, "departure_third", "Late evening departure", "outbound", "17:30"),
 ]
@@ -124,10 +134,30 @@ def target_speed_kmh(t, rng):
     return max(0, base + rng.uniform(-4, 4))
 
 
-def generate_pings(rng, start_dt, direction, heavy_traffic):
-    """Pings for one trip run: (timestamp, lat, lon, speed_kmh) every 30 s."""
-    start, end = (ROUTE_START, ROUTE_END) if direction == "inbound" else (ROUTE_END, ROUTE_START)
-    total_km = haversine_km(start, end)
+def point_at(path, cum, km):
+    """The point km along the path (cum = cumulative km at each path point)."""
+    if km <= 0:
+        return path[0]
+    if km >= cum[-1]:
+        return path[-1]
+    lo, hi = 0, len(cum) - 1
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if cum[mid] <= km:
+            lo = mid
+        else:
+            hi = mid
+    seg = cum[hi] - cum[lo] or 1e-9
+    return interpolate(path[lo], path[hi], (km - cum[lo]) / seg)
+
+
+def generate_pings(rng, start_dt, direction, heavy_traffic, route):
+    """Pings for one trip run along the route: (timestamp, lat, lon, speed_kmh) every 30 s."""
+    path = route if direction == "inbound" else route[::-1]
+    cum = [0.0]
+    for a, b in zip(path, path[1:]):
+        cum.append(cum[-1] + haversine_km(a, b))
+    total_km = cum[-1]
 
     duration_s = TRIP_DURATION_MIN * 60 + rng.uniform(-120, 240) + (480 if heavy_traffic else 0)
     n = int(duration_s / PING_INTERVAL_S)
@@ -151,10 +181,10 @@ def generate_pings(rng, start_dt, direction, heavy_traffic):
     scale = total_km / (sum(raw_dist) or 1e-9)
     speeds = [s * scale for s in raw_speeds]
 
+    cum_path = cum
     pings, cum = [], 0.0
     for i in range(n + 1):
-        fraction = min(1.0, cum / total_km) if i > 0 else 0.0
-        lat, lon = add_gps_noise(rng, *interpolate(start, end, fraction), GPS_NOISE_M)
+        lat, lon = add_gps_noise(rng, *point_at(path, cum_path, cum if i > 0 else 0.0), GPS_NOISE_M)
         speed = speeds[i - 1] if i > 0 else 0.0   # a phone reports the speed it has just travelled
         pings.append((start_dt + timedelta(seconds=i * PING_INTERVAL_S), round(lat, 6), round(lon, 6), round(speed, 1)))
         cum += raw_dist[i] * scale
@@ -184,14 +214,12 @@ def build(start_date):
     # buses, route, stops, timetable
     for bid, number, plate, cap, dev in BUSES:
         T["buses"].append([bid, number, plate, cap, "active", dev])
-    T["routes"].append([1, "Pilot route (placeholder)"])
-    for s in range(N_ROUTE_POINTS):
-        lat, lon = interpolate(ROUTE_START, ROUTE_END, s / (N_ROUTE_POINTS - 1))
-        T["route_points"].append([1, s + 1, round(lat, 6), round(lon, 6)])
-    stop_names = ["Stop 1 (pickup point)", "Stop 2", "Stop 3", "Stop 4", "Stop 5", "Campus gate"]
-    for k, name in enumerate(stop_names):
-        lat, lon = interpolate(ROUTE_START, ROUTE_END, k / (len(stop_names) - 1))
-        T["stops"].append([k + 1, 1, name, round(lat, 6), round(lon, 6), k + 1])
+    route, real_stops = read_real_route()
+    T["routes"].append([1, ROUTE_NAME])
+    for k, (lat, lon) in enumerate(route, start=1):
+        T["route_points"].append([1, k, round(lat, 6), round(lon, 6)])
+    for k, (name, lat, lon) in enumerate(real_stops, start=1):
+        T["stops"].append([k, 1, name, round(lat, 6), round(lon, 6), k])
     for tid, code, label, direction, hhmm in TRIPS:
         T["trips"].append([tid, code, label, 1, direction, hhmm])
 
@@ -245,7 +273,7 @@ def build(start_date):
             continue
         offset_s = r["delay_min"] * 60 + rng.randint(0, 60) if r["delay_min"] else rng.randint(-60, 180)
         start_dt = r["sched"] + timedelta(seconds=offset_s)
-        pings = generate_pings(rng, start_dt, T_trip[3], r["heavy"])
+        pings = generate_pings(rng, start_dt, T_trip[3], r["heavy"], route)
         r["start"], r["end"] = start_dt, pings[-1][0]
         for ts, lat, lon, spd in pings:
             T["gps_pings"].append([ping_id, r["id"], r["bus"], bus_device[r["bus"]], iso(ts), lat, lon, spd])
@@ -276,7 +304,7 @@ def build(start_date):
     # alerts for the upcoming runs of the last day (5 min is the most popular lead time in the survey)
     upcoming = [r for r in runs if r["status"] == "scheduled"]
     lead_times = [5, 5, 5, 5, 5, 10, 10, 10, 10, 2]
-    stop_choices = [6, 6, 6, 6, 6, 6, 5, 4, 3, 2]
+    stop_choices = [13, 13, 13, 13, 13, 13, 11, 9, 6, 3]   # stop ids of the real route (1 to 13)
     for k, rid in enumerate(rider_ids):
         run = upcoming[k % len(upcoming)]
         made = snapshot_dt - timedelta(minutes=rng.randint(15, 180))

@@ -1,0 +1,2324 @@
+{
+  "day": "2026-11-22",
+  "plannedTripMin": 71,
+  "scheduledDeparture": "06:30",
+  "routeKm": 45.001501493434176,
+  "stops": [
+    {
+      "name": "Gate 2 (El Nakhl)",
+      "sKm": 0,
+      "arrivalMs": 1795322019000,
+      "arrival": "06:33:39"
+    },
+    {
+      "name": "Stop 5",
+      "sKm": 14.224183016686322,
+      "arrivalMs": 1795324022000,
+      "arrival": "07:07:02"
+    },
+    {
+      "name": "Stop 9",
+      "sKm": 23.445324096215106,
+      "arrivalMs": 1795324800000,
+      "arrival": "07:20:00"
+    },
+    {
+      "name": "GIU campus",
+      "sKm": 45.001501493434176,
+      "arrivalMs": 1795326298000,
+      "arrival": "07:44:58"
+    }
+  ],
+  "results": [
+    {
+      "method": "Timetable",
+      "mae": 3.966666666666661,
+      "bias": -3.966666666666661,
+      "n": 88,
+      "stops": {
+        "mae": 13.544402112217574,
+        "n": 71
+      },
+      "byBand": [
+        3.9666666666666677,
+        3.966666666666668,
+        3.966666666666668,
+        3.966666666666668
+      ],
+      "series": [
+        {
+          "time": "06:56:06",
+          "progress": 0.105,
+          "errMin": -3.97
+        },
+        {
+          "time": "06:56:36",
+          "progress": 0.117,
+          "errMin": -3.97
+        },
+        {
+          "time": "06:57:06",
+          "progress": 0.127,
+          "errMin": -3.97
+        },
+        {
+          "time": "06:57:36",
+          "progress": 0.133,
+          "errMin": -3.97
+        },
+        {
+          "time": "06:58:06",
+          "progress": 0.141,
+          "errMin": -3.97
+        },
+        {
+          "time": "06:58:36",
+          "progress": 0.149,
+          "errMin": -3.97
+        },
+        {
+          "time": "06:59:06",
+          "progress": 0.156,
+          "errMin": -3.97
+        },
+        {
+          "time": "06:59:39",
+          "progress": 0.158,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:00:09",
+          "progress": 0.166,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:00:39",
+          "progress": 0.176,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:01:09",
+          "progress": 0.182,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:01:39",
+          "progress": 0.196,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:02:09",
+          "progress": 0.203,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:02:39",
+          "progress": 0.216,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:03:09",
+          "progress": 0.224,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:03:39",
+          "progress": 0.231,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:04:09",
+          "progress": 0.24,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:04:39",
+          "progress": 0.252,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:05:09",
+          "progress": 0.259,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:05:39",
+          "progress": 0.272,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:06:09",
+          "progress": 0.278,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:06:39",
+          "progress": 0.288,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:07:09",
+          "progress": 0.302,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:07:44",
+          "progress": 0.308,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:08:14",
+          "progress": 0.315,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:09:39",
+          "progress": 0.316,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:10:09",
+          "progress": 0.322,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:10:39",
+          "progress": 0.331,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:11:09",
+          "progress": 0.34,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:11:39",
+          "progress": 0.347,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:12:09",
+          "progress": 0.354,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:12:39",
+          "progress": 0.361,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:13:09",
+          "progress": 0.37,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:13:39",
+          "progress": 0.38,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:14:09",
+          "progress": 0.393,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:14:39",
+          "progress": 0.405,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:15:09",
+          "progress": 0.413,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:15:39",
+          "progress": 0.421,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:16:09",
+          "progress": 0.43,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:16:39",
+          "progress": 0.44,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:17:09",
+          "progress": 0.444,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:17:39",
+          "progress": 0.455,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:18:09",
+          "progress": 0.467,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:18:39",
+          "progress": 0.479,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:19:09",
+          "progress": 0.489,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:19:39",
+          "progress": 0.498,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:20:09",
+          "progress": 0.511,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:20:39",
+          "progress": 0.518,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:21:29",
+          "progress": 0.521,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:22:03",
+          "progress": 0.521,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:22:39",
+          "progress": 0.52,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:23:10",
+          "progress": 0.522,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:23:40",
+          "progress": 0.526,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:24:10",
+          "progress": 0.535,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:24:40",
+          "progress": 0.544,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:25:10",
+          "progress": 0.554,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:25:40",
+          "progress": 0.563,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:26:10",
+          "progress": 0.571,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:26:40",
+          "progress": 0.579,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:27:10",
+          "progress": 0.586,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:27:40",
+          "progress": 0.597,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:28:10",
+          "progress": 0.613,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:28:40",
+          "progress": 0.63,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:29:11",
+          "progress": 0.643,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:29:41",
+          "progress": 0.645,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:30:11",
+          "progress": 0.655,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:30:41",
+          "progress": 0.663,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:31:11",
+          "progress": 0.674,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:31:41",
+          "progress": 0.688,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:32:11",
+          "progress": 0.703,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:32:41",
+          "progress": 0.711,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:33:11",
+          "progress": 0.717,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:33:41",
+          "progress": 0.725,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:34:11",
+          "progress": 0.738,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:34:41",
+          "progress": 0.755,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:35:11",
+          "progress": 0.772,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:35:41",
+          "progress": 0.789,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:36:11",
+          "progress": 0.806,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:36:41",
+          "progress": 0.823,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:37:11",
+          "progress": 0.838,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:37:41",
+          "progress": 0.852,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:38:11",
+          "progress": 0.862,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:38:41",
+          "progress": 0.872,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:39:11",
+          "progress": 0.888,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:39:41",
+          "progress": 0.903,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:40:11",
+          "progress": 0.917,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:40:41",
+          "progress": 0.927,
+          "errMin": -3.97
+        },
+        {
+          "time": "07:41:11",
+          "progress": 0.942,
+          "errMin": -3.97
+        }
+      ]
+    },
+    {
+      "method": "Schedule",
+      "mae": 10.536224551160409,
+      "bias": 10.536224551160409,
+      "n": 88,
+      "stops": {
+        "mae": 3.42546854660679,
+        "n": 71
+      },
+      "byBand": [
+        13.964466417499619,
+        12.146533410784839,
+        10.362352059355235,
+        3.3854646307082406
+      ],
+      "series": [
+        {
+          "time": "06:56:06",
+          "progress": 0.105,
+          "errMin": 14.64
+        },
+        {
+          "time": "06:56:36",
+          "progress": 0.117,
+          "errMin": 14.35
+        },
+        {
+          "time": "06:57:06",
+          "progress": 0.127,
+          "errMin": 14.12
+        },
+        {
+          "time": "06:57:36",
+          "progress": 0.133,
+          "errMin": 14.21
+        },
+        {
+          "time": "06:58:06",
+          "progress": 0.141,
+          "errMin": 14.13
+        },
+        {
+          "time": "06:58:36",
+          "progress": 0.149,
+          "errMin": 14.02
+        },
+        {
+          "time": "06:59:06",
+          "progress": 0.156,
+          "errMin": 14.04
+        },
+        {
+          "time": "06:59:39",
+          "progress": 0.158,
+          "errMin": 14.47
+        },
+        {
+          "time": "07:00:09",
+          "progress": 0.166,
+          "errMin": 14.38
+        },
+        {
+          "time": "07:00:39",
+          "progress": 0.176,
+          "errMin": 14.2
+        },
+        {
+          "time": "07:01:09",
+          "progress": 0.182,
+          "errMin": 14.23
+        },
+        {
+          "time": "07:01:39",
+          "progress": 0.196,
+          "errMin": 13.78
+        },
+        {
+          "time": "07:02:09",
+          "progress": 0.203,
+          "errMin": 13.75
+        },
+        {
+          "time": "07:02:39",
+          "progress": 0.216,
+          "errMin": 13.35
+        },
+        {
+          "time": "07:03:09",
+          "progress": 0.224,
+          "errMin": 13.3
+        },
+        {
+          "time": "07:03:39",
+          "progress": 0.231,
+          "errMin": 13.26
+        },
+        {
+          "time": "07:04:09",
+          "progress": 0.24,
+          "errMin": 13.16
+        },
+        {
+          "time": "07:04:39",
+          "progress": 0.252,
+          "errMin": 12.81
+        },
+        {
+          "time": "07:05:09",
+          "progress": 0.259,
+          "errMin": 12.83
+        },
+        {
+          "time": "07:05:39",
+          "progress": 0.272,
+          "errMin": 12.36
+        },
+        {
+          "time": "07:06:09",
+          "progress": 0.278,
+          "errMin": 12.46
+        },
+        {
+          "time": "07:06:39",
+          "progress": 0.288,
+          "errMin": 12.2
+        },
+        {
+          "time": "07:07:09",
+          "progress": 0.302,
+          "errMin": 11.75
+        },
+        {
+          "time": "07:07:44",
+          "progress": 0.308,
+          "errMin": 11.9
+        },
+        {
+          "time": "07:08:14",
+          "progress": 0.315,
+          "errMin": 11.91
+        },
+        {
+          "time": "07:09:39",
+          "progress": 0.316,
+          "errMin": 13.22
+        },
+        {
+          "time": "07:10:09",
+          "progress": 0.322,
+          "errMin": 13.32
+        },
+        {
+          "time": "07:10:39",
+          "progress": 0.331,
+          "errMin": 13.19
+        },
+        {
+          "time": "07:11:09",
+          "progress": 0.34,
+          "errMin": 13.05
+        },
+        {
+          "time": "07:11:39",
+          "progress": 0.347,
+          "errMin": 13.07
+        },
+        {
+          "time": "07:12:09",
+          "progress": 0.354,
+          "errMin": 13.03
+        },
+        {
+          "time": "07:12:39",
+          "progress": 0.361,
+          "errMin": 13.08
+        },
+        {
+          "time": "07:13:09",
+          "progress": 0.37,
+          "errMin": 12.9
+        },
+        {
+          "time": "07:13:39",
+          "progress": 0.38,
+          "errMin": 12.69
+        },
+        {
+          "time": "07:14:09",
+          "progress": 0.393,
+          "errMin": 12.26
+        },
+        {
+          "time": "07:14:39",
+          "progress": 0.405,
+          "errMin": 11.92
+        },
+        {
+          "time": "07:15:09",
+          "progress": 0.413,
+          "errMin": 11.83
+        },
+        {
+          "time": "07:15:39",
+          "progress": 0.421,
+          "errMin": 11.8
+        },
+        {
+          "time": "07:16:09",
+          "progress": 0.43,
+          "errMin": 11.65
+        },
+        {
+          "time": "07:16:39",
+          "progress": 0.44,
+          "errMin": 11.47
+        },
+        {
+          "time": "07:17:09",
+          "progress": 0.444,
+          "errMin": 11.67
+        },
+        {
+          "time": "07:17:39",
+          "progress": 0.455,
+          "errMin": 11.38
+        },
+        {
+          "time": "07:18:09",
+          "progress": 0.467,
+          "errMin": 11.03
+        },
+        {
+          "time": "07:18:39",
+          "progress": 0.479,
+          "errMin": 10.7
+        },
+        {
+          "time": "07:19:09",
+          "progress": 0.489,
+          "errMin": 10.44
+        },
+        {
+          "time": "07:19:39",
+          "progress": 0.498,
+          "errMin": 10.3
+        },
+        {
+          "time": "07:20:09",
+          "progress": 0.511,
+          "errMin": 9.87
+        },
+        {
+          "time": "07:20:39",
+          "progress": 0.518,
+          "errMin": 9.94
+        },
+        {
+          "time": "07:21:29",
+          "progress": 0.521,
+          "errMin": 10.54
+        },
+        {
+          "time": "07:22:03",
+          "progress": 0.521,
+          "errMin": 11.1
+        },
+        {
+          "time": "07:22:39",
+          "progress": 0.52,
+          "errMin": 11.73
+        },
+        {
+          "time": "07:23:10",
+          "progress": 0.522,
+          "errMin": 12.17
+        },
+        {
+          "time": "07:23:40",
+          "progress": 0.526,
+          "errMin": 12.37
+        },
+        {
+          "time": "07:24:10",
+          "progress": 0.535,
+          "errMin": 12.22
+        },
+        {
+          "time": "07:24:40",
+          "progress": 0.544,
+          "errMin": 12.05
+        },
+        {
+          "time": "07:25:10",
+          "progress": 0.554,
+          "errMin": 11.85
+        },
+        {
+          "time": "07:25:40",
+          "progress": 0.563,
+          "errMin": 11.7
+        },
+        {
+          "time": "07:26:10",
+          "progress": 0.571,
+          "errMin": 11.64
+        },
+        {
+          "time": "07:26:40",
+          "progress": 0.579,
+          "errMin": 11.61
+        },
+        {
+          "time": "07:27:10",
+          "progress": 0.586,
+          "errMin": 11.59
+        },
+        {
+          "time": "07:27:40",
+          "progress": 0.597,
+          "errMin": 11.29
+        },
+        {
+          "time": "07:28:10",
+          "progress": 0.613,
+          "errMin": 10.66
+        },
+        {
+          "time": "07:28:40",
+          "progress": 0.63,
+          "errMin": 9.95
+        },
+        {
+          "time": "07:29:11",
+          "progress": 0.643,
+          "errMin": 9.57
+        },
+        {
+          "time": "07:29:41",
+          "progress": 0.645,
+          "errMin": 9.92
+        },
+        {
+          "time": "07:30:11",
+          "progress": 0.655,
+          "errMin": 9.69
+        },
+        {
+          "time": "07:30:41",
+          "progress": 0.663,
+          "errMin": 9.65
+        },
+        {
+          "time": "07:31:11",
+          "progress": 0.674,
+          "errMin": 9.33
+        },
+        {
+          "time": "07:31:41",
+          "progress": 0.688,
+          "errMin": 8.85
+        },
+        {
+          "time": "07:32:11",
+          "progress": 0.703,
+          "errMin": 8.27
+        },
+        {
+          "time": "07:32:41",
+          "progress": 0.711,
+          "errMin": 8.21
+        },
+        {
+          "time": "07:33:11",
+          "progress": 0.717,
+          "errMin": 8.3
+        },
+        {
+          "time": "07:33:41",
+          "progress": 0.725,
+          "errMin": 8.24
+        },
+        {
+          "time": "07:34:11",
+          "progress": 0.738,
+          "errMin": 7.82
+        },
+        {
+          "time": "07:34:41",
+          "progress": 0.755,
+          "errMin": 7.1
+        },
+        {
+          "time": "07:35:11",
+          "progress": 0.772,
+          "errMin": 6.4
+        },
+        {
+          "time": "07:35:41",
+          "progress": 0.789,
+          "errMin": 5.7
+        },
+        {
+          "time": "07:36:11",
+          "progress": 0.806,
+          "errMin": 5
+        },
+        {
+          "time": "07:36:41",
+          "progress": 0.823,
+          "errMin": 4.29
+        },
+        {
+          "time": "07:37:11",
+          "progress": 0.838,
+          "errMin": 3.73
+        },
+        {
+          "time": "07:37:41",
+          "progress": 0.852,
+          "errMin": 3.22
+        },
+        {
+          "time": "07:38:11",
+          "progress": 0.862,
+          "errMin": 3.01
+        },
+        {
+          "time": "07:38:41",
+          "progress": 0.872,
+          "errMin": 2.77
+        },
+        {
+          "time": "07:39:11",
+          "progress": 0.888,
+          "errMin": 2.19
+        },
+        {
+          "time": "07:39:41",
+          "progress": 0.903,
+          "errMin": 1.61
+        },
+        {
+          "time": "07:40:11",
+          "progress": 0.917,
+          "errMin": 1.1
+        },
+        {
+          "time": "07:40:41",
+          "progress": 0.927,
+          "errMin": 0.93
+        },
+        {
+          "time": "07:41:11",
+          "progress": 0.942,
+          "errMin": 0.35
+        }
+      ]
+    },
+    {
+      "method": "Recent speed",
+      "mae": 11.409934968289464,
+      "bias": 10.500736611892235,
+      "n": 88,
+      "stops": {
+        "mae": 5.090310678057607,
+        "n": 71
+      },
+      "byBand": [
+        25.613909458773744,
+        5.395587850496138,
+        13.84490992373512,
+        1.7505922058105472
+      ],
+      "series": [
+        {
+          "time": "06:56:06",
+          "progress": 0.105,
+          "errMin": 202.67
+        },
+        {
+          "time": "06:56:36",
+          "progress": 0.117,
+          "errMin": 57.85
+        },
+        {
+          "time": "06:57:06",
+          "progress": 0.127,
+          "errMin": 33.04
+        },
+        {
+          "time": "06:57:36",
+          "progress": 0.133,
+          "errMin": 32.1
+        },
+        {
+          "time": "06:58:06",
+          "progress": 0.141,
+          "errMin": 16.02
+        },
+        {
+          "time": "06:58:36",
+          "progress": 0.149,
+          "errMin": 8.28
+        },
+        {
+          "time": "06:59:06",
+          "progress": 0.156,
+          "errMin": 3.68
+        },
+        {
+          "time": "06:59:39",
+          "progress": 0.158,
+          "errMin": 15.43
+        },
+        {
+          "time": "07:00:09",
+          "progress": 0.166,
+          "errMin": 18.31
+        },
+        {
+          "time": "07:00:39",
+          "progress": 0.176,
+          "errMin": 12.6
+        },
+        {
+          "time": "07:01:09",
+          "progress": 0.182,
+          "errMin": 14.86
+        },
+        {
+          "time": "07:01:39",
+          "progress": 0.196,
+          "errMin": 8.43
+        },
+        {
+          "time": "07:02:09",
+          "progress": 0.203,
+          "errMin": 7.74
+        },
+        {
+          "time": "07:02:39",
+          "progress": 0.216,
+          "errMin": -1.83
+        },
+        {
+          "time": "07:03:09",
+          "progress": 0.224,
+          "errMin": -1.29
+        },
+        {
+          "time": "07:03:39",
+          "progress": 0.231,
+          "errMin": 0.19
+        },
+        {
+          "time": "07:04:09",
+          "progress": 0.24,
+          "errMin": -1.09
+        },
+        {
+          "time": "07:04:39",
+          "progress": 0.252,
+          "errMin": -0.24
+        },
+        {
+          "time": "07:05:09",
+          "progress": 0.259,
+          "errMin": 0.39
+        },
+        {
+          "time": "07:05:39",
+          "progress": 0.272,
+          "errMin": -0.55
+        },
+        {
+          "time": "07:06:09",
+          "progress": 0.278,
+          "errMin": 1.18
+        },
+        {
+          "time": "07:06:39",
+          "progress": 0.288,
+          "errMin": -1.02
+        },
+        {
+          "time": "07:07:09",
+          "progress": 0.302,
+          "errMin": -4.11
+        },
+        {
+          "time": "07:07:44",
+          "progress": 0.308,
+          "errMin": 0.96
+        },
+        {
+          "time": "07:08:14",
+          "progress": 0.315,
+          "errMin": 0.97
+        },
+        {
+          "time": "07:09:39",
+          "progress": 0.316,
+          "errMin": 14.24
+        },
+        {
+          "time": "07:10:09",
+          "progress": 0.322,
+          "errMin": 14.23
+        },
+        {
+          "time": "07:10:39",
+          "progress": 0.331,
+          "errMin": 16.43
+        },
+        {
+          "time": "07:11:09",
+          "progress": 0.34,
+          "errMin": 22.38
+        },
+        {
+          "time": "07:11:39",
+          "progress": 0.347,
+          "errMin": 18.47
+        },
+        {
+          "time": "07:12:09",
+          "progress": 0.354,
+          "errMin": 17.57
+        },
+        {
+          "time": "07:12:39",
+          "progress": 0.361,
+          "errMin": 11.01
+        },
+        {
+          "time": "07:13:09",
+          "progress": 0.37,
+          "errMin": 7.36
+        },
+        {
+          "time": "07:13:39",
+          "progress": 0.38,
+          "errMin": 6.35
+        },
+        {
+          "time": "07:14:09",
+          "progress": 0.393,
+          "errMin": 3.27
+        },
+        {
+          "time": "07:14:39",
+          "progress": 0.405,
+          "errMin": 0.21
+        },
+        {
+          "time": "07:15:09",
+          "progress": 0.413,
+          "errMin": -0.08
+        },
+        {
+          "time": "07:15:39",
+          "progress": 0.421,
+          "errMin": -0.51
+        },
+        {
+          "time": "07:16:09",
+          "progress": 0.43,
+          "errMin": -0.29
+        },
+        {
+          "time": "07:16:39",
+          "progress": 0.44,
+          "errMin": -0.13
+        },
+        {
+          "time": "07:17:09",
+          "progress": 0.444,
+          "errMin": 5.07
+        },
+        {
+          "time": "07:17:39",
+          "progress": 0.455,
+          "errMin": 5.39
+        },
+        {
+          "time": "07:18:09",
+          "progress": 0.467,
+          "errMin": 3.01
+        },
+        {
+          "time": "07:18:39",
+          "progress": 0.479,
+          "errMin": 0.72
+        },
+        {
+          "time": "07:19:09",
+          "progress": 0.489,
+          "errMin": -0.04
+        },
+        {
+          "time": "07:19:39",
+          "progress": 0.498,
+          "errMin": 0.31
+        },
+        {
+          "time": "07:20:09",
+          "progress": 0.511,
+          "errMin": -3.15
+        },
+        {
+          "time": "07:20:39",
+          "progress": 0.518,
+          "errMin": -1.22
+        },
+        {
+          "time": "07:21:29",
+          "progress": 0.521,
+          "errMin": 4.78
+        },
+        {
+          "time": "07:22:03",
+          "progress": 0.521,
+          "errMin": 13.59
+        },
+        {
+          "time": "07:22:39",
+          "progress": 0.52,
+          "errMin": 27.56
+        },
+        {
+          "time": "07:23:10",
+          "progress": 0.522,
+          "errMin": 48.62
+        },
+        {
+          "time": "07:23:40",
+          "progress": 0.526,
+          "errMin": 101.84
+        },
+        {
+          "time": "07:24:10",
+          "progress": 0.535,
+          "errMin": 74.89
+        },
+        {
+          "time": "07:24:40",
+          "progress": 0.544,
+          "errMin": 36.65
+        },
+        {
+          "time": "07:25:10",
+          "progress": 0.554,
+          "errMin": 19.93
+        },
+        {
+          "time": "07:25:40",
+          "progress": 0.563,
+          "errMin": 11.58
+        },
+        {
+          "time": "07:26:10",
+          "progress": 0.571,
+          "errMin": 7.01
+        },
+        {
+          "time": "07:26:40",
+          "progress": 0.579,
+          "errMin": 5.46
+        },
+        {
+          "time": "07:27:10",
+          "progress": 0.586,
+          "errMin": 6.41
+        },
+        {
+          "time": "07:27:40",
+          "progress": 0.597,
+          "errMin": 5.5
+        },
+        {
+          "time": "07:28:10",
+          "progress": 0.613,
+          "errMin": 2.83
+        },
+        {
+          "time": "07:28:40",
+          "progress": 0.63,
+          "errMin": 0.23
+        },
+        {
+          "time": "07:29:11",
+          "progress": 0.643,
+          "errMin": -0.76
+        },
+        {
+          "time": "07:29:41",
+          "progress": 0.645,
+          "errMin": 0.91
+        },
+        {
+          "time": "07:30:11",
+          "progress": 0.655,
+          "errMin": 0.24
+        },
+        {
+          "time": "07:30:41",
+          "progress": 0.663,
+          "errMin": 1.22
+        },
+        {
+          "time": "07:31:11",
+          "progress": 0.674,
+          "errMin": 2.3
+        },
+        {
+          "time": "07:31:41",
+          "progress": 0.688,
+          "errMin": 2.97
+        },
+        {
+          "time": "07:32:11",
+          "progress": 0.703,
+          "errMin": 1.87
+        },
+        {
+          "time": "07:32:41",
+          "progress": 0.711,
+          "errMin": 0.73
+        },
+        {
+          "time": "07:33:11",
+          "progress": 0.717,
+          "errMin": 1.9
+        },
+        {
+          "time": "07:33:41",
+          "progress": 0.725,
+          "errMin": 1.96
+        },
+        {
+          "time": "07:34:11",
+          "progress": 0.738,
+          "errMin": 1.55
+        },
+        {
+          "time": "07:34:41",
+          "progress": 0.755,
+          "errMin": 0.66
+        },
+        {
+          "time": "07:35:11",
+          "progress": 0.772,
+          "errMin": 0.16
+        },
+        {
+          "time": "07:35:41",
+          "progress": 0.789,
+          "errMin": -1.13
+        },
+        {
+          "time": "07:36:11",
+          "progress": 0.806,
+          "errMin": -2.23
+        },
+        {
+          "time": "07:36:41",
+          "progress": 0.823,
+          "errMin": -2.87
+        },
+        {
+          "time": "07:37:11",
+          "progress": 0.838,
+          "errMin": -2.92
+        },
+        {
+          "time": "07:37:41",
+          "progress": 0.852,
+          "errMin": -2.7
+        },
+        {
+          "time": "07:38:11",
+          "progress": 0.862,
+          "errMin": -2.2
+        },
+        {
+          "time": "07:38:41",
+          "progress": 0.872,
+          "errMin": -1.71
+        },
+        {
+          "time": "07:39:11",
+          "progress": 0.888,
+          "errMin": -1.67
+        },
+        {
+          "time": "07:39:41",
+          "progress": 0.903,
+          "errMin": -1.65
+        },
+        {
+          "time": "07:40:11",
+          "progress": 0.917,
+          "errMin": -1.66
+        },
+        {
+          "time": "07:40:41",
+          "progress": 0.927,
+          "errMin": -1.34
+        },
+        {
+          "time": "07:41:11",
+          "progress": 0.942,
+          "errMin": -1.6
+        }
+      ]
+    },
+    {
+      "method": "Blended (first version)",
+      "mae": 9.085660317900691,
+      "bias": 8.248319899310486,
+      "n": 88,
+      "stops": {
+        "mae": 3.0920764420343696,
+        "n": 71
+      },
+      "byBand": [
+        13.582370092055378,
+        5.395587850496138,
+        13.84490992373512,
+        1.7505922058105472
+      ],
+      "series": [
+        {
+          "time": "06:56:06",
+          "progress": 0.105,
+          "errMin": 43.9
+        },
+        {
+          "time": "06:56:36",
+          "progress": 0.117,
+          "errMin": 29.17
+        },
+        {
+          "time": "06:57:06",
+          "progress": 0.127,
+          "errMin": 22.47
+        },
+        {
+          "time": "06:57:36",
+          "progress": 0.133,
+          "errMin": 22.57
+        },
+        {
+          "time": "06:58:06",
+          "progress": 0.141,
+          "errMin": 15.18
+        },
+        {
+          "time": "06:58:36",
+          "progress": 0.149,
+          "errMin": 10.45
+        },
+        {
+          "time": "06:59:06",
+          "progress": 0.156,
+          "errMin": 7.12
+        },
+        {
+          "time": "06:59:39",
+          "progress": 0.158,
+          "errMin": 15.07
+        },
+        {
+          "time": "07:00:09",
+          "progress": 0.166,
+          "errMin": 16.94
+        },
+        {
+          "time": "07:00:39",
+          "progress": 0.176,
+          "errMin": 13.06
+        },
+        {
+          "time": "07:01:09",
+          "progress": 0.182,
+          "errMin": 14.69
+        },
+        {
+          "time": "07:01:39",
+          "progress": 0.196,
+          "errMin": 9.51
+        },
+        {
+          "time": "07:02:09",
+          "progress": 0.203,
+          "errMin": 8.76
+        },
+        {
+          "time": "07:02:39",
+          "progress": 0.216,
+          "errMin": -0.27
+        },
+        {
+          "time": "07:03:09",
+          "progress": 0.224,
+          "errMin": -0.13
+        },
+        {
+          "time": "07:03:39",
+          "progress": 0.231,
+          "errMin": 0.95
+        },
+        {
+          "time": "07:04:09",
+          "progress": 0.24,
+          "errMin": -0.66
+        },
+        {
+          "time": "07:04:39",
+          "progress": 0.252,
+          "errMin": -0.24
+        },
+        {
+          "time": "07:05:09",
+          "progress": 0.259,
+          "errMin": 0.39
+        },
+        {
+          "time": "07:05:39",
+          "progress": 0.272,
+          "errMin": -0.55
+        },
+        {
+          "time": "07:06:09",
+          "progress": 0.278,
+          "errMin": 1.18
+        },
+        {
+          "time": "07:06:39",
+          "progress": 0.288,
+          "errMin": -1.02
+        },
+        {
+          "time": "07:07:09",
+          "progress": 0.302,
+          "errMin": -4.11
+        },
+        {
+          "time": "07:07:44",
+          "progress": 0.308,
+          "errMin": 0.96
+        },
+        {
+          "time": "07:08:14",
+          "progress": 0.315,
+          "errMin": 0.97
+        },
+        {
+          "time": "07:09:39",
+          "progress": 0.316,
+          "errMin": 14.24
+        },
+        {
+          "time": "07:10:09",
+          "progress": 0.322,
+          "errMin": 14.23
+        },
+        {
+          "time": "07:10:39",
+          "progress": 0.331,
+          "errMin": 16.43
+        },
+        {
+          "time": "07:11:09",
+          "progress": 0.34,
+          "errMin": 22.38
+        },
+        {
+          "time": "07:11:39",
+          "progress": 0.347,
+          "errMin": 18.47
+        },
+        {
+          "time": "07:12:09",
+          "progress": 0.354,
+          "errMin": 17.57
+        },
+        {
+          "time": "07:12:39",
+          "progress": 0.361,
+          "errMin": 11.01
+        },
+        {
+          "time": "07:13:09",
+          "progress": 0.37,
+          "errMin": 7.36
+        },
+        {
+          "time": "07:13:39",
+          "progress": 0.38,
+          "errMin": 6.35
+        },
+        {
+          "time": "07:14:09",
+          "progress": 0.393,
+          "errMin": 3.27
+        },
+        {
+          "time": "07:14:39",
+          "progress": 0.405,
+          "errMin": 0.21
+        },
+        {
+          "time": "07:15:09",
+          "progress": 0.413,
+          "errMin": -0.08
+        },
+        {
+          "time": "07:15:39",
+          "progress": 0.421,
+          "errMin": -0.51
+        },
+        {
+          "time": "07:16:09",
+          "progress": 0.43,
+          "errMin": -0.29
+        },
+        {
+          "time": "07:16:39",
+          "progress": 0.44,
+          "errMin": -0.13
+        },
+        {
+          "time": "07:17:09",
+          "progress": 0.444,
+          "errMin": 5.07
+        },
+        {
+          "time": "07:17:39",
+          "progress": 0.455,
+          "errMin": 5.39
+        },
+        {
+          "time": "07:18:09",
+          "progress": 0.467,
+          "errMin": 3.01
+        },
+        {
+          "time": "07:18:39",
+          "progress": 0.479,
+          "errMin": 0.72
+        },
+        {
+          "time": "07:19:09",
+          "progress": 0.489,
+          "errMin": -0.04
+        },
+        {
+          "time": "07:19:39",
+          "progress": 0.498,
+          "errMin": 0.31
+        },
+        {
+          "time": "07:20:09",
+          "progress": 0.511,
+          "errMin": -3.15
+        },
+        {
+          "time": "07:20:39",
+          "progress": 0.518,
+          "errMin": -1.22
+        },
+        {
+          "time": "07:21:29",
+          "progress": 0.521,
+          "errMin": 4.78
+        },
+        {
+          "time": "07:22:03",
+          "progress": 0.521,
+          "errMin": 13.59
+        },
+        {
+          "time": "07:22:39",
+          "progress": 0.52,
+          "errMin": 27.56
+        },
+        {
+          "time": "07:23:10",
+          "progress": 0.522,
+          "errMin": 48.62
+        },
+        {
+          "time": "07:23:40",
+          "progress": 0.526,
+          "errMin": 101.84
+        },
+        {
+          "time": "07:24:10",
+          "progress": 0.535,
+          "errMin": 74.89
+        },
+        {
+          "time": "07:24:40",
+          "progress": 0.544,
+          "errMin": 36.65
+        },
+        {
+          "time": "07:25:10",
+          "progress": 0.554,
+          "errMin": 19.93
+        },
+        {
+          "time": "07:25:40",
+          "progress": 0.563,
+          "errMin": 11.58
+        },
+        {
+          "time": "07:26:10",
+          "progress": 0.571,
+          "errMin": 7.01
+        },
+        {
+          "time": "07:26:40",
+          "progress": 0.579,
+          "errMin": 5.46
+        },
+        {
+          "time": "07:27:10",
+          "progress": 0.586,
+          "errMin": 6.41
+        },
+        {
+          "time": "07:27:40",
+          "progress": 0.597,
+          "errMin": 5.5
+        },
+        {
+          "time": "07:28:10",
+          "progress": 0.613,
+          "errMin": 2.83
+        },
+        {
+          "time": "07:28:40",
+          "progress": 0.63,
+          "errMin": 0.23
+        },
+        {
+          "time": "07:29:11",
+          "progress": 0.643,
+          "errMin": -0.76
+        },
+        {
+          "time": "07:29:41",
+          "progress": 0.645,
+          "errMin": 0.91
+        },
+        {
+          "time": "07:30:11",
+          "progress": 0.655,
+          "errMin": 0.24
+        },
+        {
+          "time": "07:30:41",
+          "progress": 0.663,
+          "errMin": 1.22
+        },
+        {
+          "time": "07:31:11",
+          "progress": 0.674,
+          "errMin": 2.3
+        },
+        {
+          "time": "07:31:41",
+          "progress": 0.688,
+          "errMin": 2.97
+        },
+        {
+          "time": "07:32:11",
+          "progress": 0.703,
+          "errMin": 1.87
+        },
+        {
+          "time": "07:32:41",
+          "progress": 0.711,
+          "errMin": 0.73
+        },
+        {
+          "time": "07:33:11",
+          "progress": 0.717,
+          "errMin": 1.9
+        },
+        {
+          "time": "07:33:41",
+          "progress": 0.725,
+          "errMin": 1.96
+        },
+        {
+          "time": "07:34:11",
+          "progress": 0.738,
+          "errMin": 1.55
+        },
+        {
+          "time": "07:34:41",
+          "progress": 0.755,
+          "errMin": 0.66
+        },
+        {
+          "time": "07:35:11",
+          "progress": 0.772,
+          "errMin": 0.16
+        },
+        {
+          "time": "07:35:41",
+          "progress": 0.789,
+          "errMin": -1.13
+        },
+        {
+          "time": "07:36:11",
+          "progress": 0.806,
+          "errMin": -2.23
+        },
+        {
+          "time": "07:36:41",
+          "progress": 0.823,
+          "errMin": -2.87
+        },
+        {
+          "time": "07:37:11",
+          "progress": 0.838,
+          "errMin": -2.92
+        },
+        {
+          "time": "07:37:41",
+          "progress": 0.852,
+          "errMin": -2.7
+        },
+        {
+          "time": "07:38:11",
+          "progress": 0.862,
+          "errMin": -2.2
+        },
+        {
+          "time": "07:38:41",
+          "progress": 0.872,
+          "errMin": -1.71
+        },
+        {
+          "time": "07:39:11",
+          "progress": 0.888,
+          "errMin": -1.67
+        },
+        {
+          "time": "07:39:41",
+          "progress": 0.903,
+          "errMin": -1.65
+        },
+        {
+          "time": "07:40:11",
+          "progress": 0.917,
+          "errMin": -1.66
+        },
+        {
+          "time": "07:40:41",
+          "progress": 0.927,
+          "errMin": -1.34
+        },
+        {
+          "time": "07:41:11",
+          "progress": 0.942,
+          "errMin": -1.6
+        }
+      ]
+    },
+    {
+      "method": "Blended (tuned, now in the app)",
+      "mae": 10.314815188228723,
+      "bias": 10.302938068181819,
+      "n": 88,
+      "stops": {
+        "mae": 4.757392227788935,
+        "n": 71
+      },
+      "byBand": [
+        24.285608716299016,
+        8.652116625275008,
+        7.822824536423456,
+        1.7784228024437314
+      ],
+      "series": [
+        {
+          "time": "06:56:06",
+          "progress": 0.105,
+          "errMin": 95.68
+        },
+        {
+          "time": "06:56:36",
+          "progress": 0.117,
+          "errMin": 42.15
+        },
+        {
+          "time": "06:57:06",
+          "progress": 0.127,
+          "errMin": 27.31
+        },
+        {
+          "time": "06:57:36",
+          "progress": 0.133,
+          "errMin": 26.72
+        },
+        {
+          "time": "06:58:06",
+          "progress": 0.141,
+          "errMin": 22.96
+        },
+        {
+          "time": "06:58:36",
+          "progress": 0.149,
+          "errMin": 20.02
+        },
+        {
+          "time": "06:59:06",
+          "progress": 0.156,
+          "errMin": 19.42
+        },
+        {
+          "time": "06:59:39",
+          "progress": 0.158,
+          "errMin": 23.4
+        },
+        {
+          "time": "07:00:09",
+          "progress": 0.166,
+          "errMin": 21.34
+        },
+        {
+          "time": "07:00:39",
+          "progress": 0.176,
+          "errMin": 18.87
+        },
+        {
+          "time": "07:01:09",
+          "progress": 0.182,
+          "errMin": 18.73
+        },
+        {
+          "time": "07:01:39",
+          "progress": 0.196,
+          "errMin": 14.85
+        },
+        {
+          "time": "07:02:09",
+          "progress": 0.203,
+          "errMin": 14.54
+        },
+        {
+          "time": "07:02:39",
+          "progress": 0.216,
+          "errMin": 12.04
+        },
+        {
+          "time": "07:03:09",
+          "progress": 0.224,
+          "errMin": 11.84
+        },
+        {
+          "time": "07:03:39",
+          "progress": 0.231,
+          "errMin": 11.7
+        },
+        {
+          "time": "07:04:09",
+          "progress": 0.24,
+          "errMin": 11.29
+        },
+        {
+          "time": "07:04:39",
+          "progress": 0.252,
+          "errMin": 9.78
+        },
+        {
+          "time": "07:05:09",
+          "progress": 0.259,
+          "errMin": 10.01
+        },
+        {
+          "time": "07:05:39",
+          "progress": 0.272,
+          "errMin": 8.28
+        },
+        {
+          "time": "07:06:09",
+          "progress": 0.278,
+          "errMin": 8.87
+        },
+        {
+          "time": "07:06:39",
+          "progress": 0.288,
+          "errMin": 8.09
+        },
+        {
+          "time": "07:07:09",
+          "progress": 0.302,
+          "errMin": 6.76
+        },
+        {
+          "time": "07:07:44",
+          "progress": 0.308,
+          "errMin": 7.6
+        },
+        {
+          "time": "07:08:14",
+          "progress": 0.315,
+          "errMin": 7.8
+        },
+        {
+          "time": "07:09:39",
+          "progress": 0.316,
+          "errMin": 10.3
+        },
+        {
+          "time": "07:10:09",
+          "progress": 0.322,
+          "errMin": 10.73
+        },
+        {
+          "time": "07:10:39",
+          "progress": 0.331,
+          "errMin": 10.45
+        },
+        {
+          "time": "07:11:09",
+          "progress": 0.34,
+          "errMin": 10.14
+        },
+        {
+          "time": "07:11:39",
+          "progress": 0.347,
+          "errMin": 10.31
+        },
+        {
+          "time": "07:12:09",
+          "progress": 0.354,
+          "errMin": 10.31
+        },
+        {
+          "time": "07:12:39",
+          "progress": 0.361,
+          "errMin": 10.55
+        },
+        {
+          "time": "07:13:09",
+          "progress": 0.37,
+          "errMin": 10.16
+        },
+        {
+          "time": "07:13:39",
+          "progress": 0.38,
+          "errMin": 9.73
+        },
+        {
+          "time": "07:14:09",
+          "progress": 0.393,
+          "errMin": 8.8
+        },
+        {
+          "time": "07:14:39",
+          "progress": 0.405,
+          "errMin": 8.12
+        },
+        {
+          "time": "07:15:09",
+          "progress": 0.413,
+          "errMin": 8.06
+        },
+        {
+          "time": "07:15:39",
+          "progress": 0.421,
+          "errMin": 8.12
+        },
+        {
+          "time": "07:16:09",
+          "progress": 0.43,
+          "errMin": 7.92
+        },
+        {
+          "time": "07:16:39",
+          "progress": 0.44,
+          "errMin": 7.66
+        },
+        {
+          "time": "07:17:09",
+          "progress": 0.444,
+          "errMin": 8.2
+        },
+        {
+          "time": "07:17:39",
+          "progress": 0.455,
+          "errMin": 7.73
+        },
+        {
+          "time": "07:18:09",
+          "progress": 0.467,
+          "errMin": 7.18
+        },
+        {
+          "time": "07:18:39",
+          "progress": 0.479,
+          "errMin": 6.69
+        },
+        {
+          "time": "07:19:09",
+          "progress": 0.489,
+          "errMin": 6.33
+        },
+        {
+          "time": "07:19:39",
+          "progress": 0.498,
+          "errMin": 6.23
+        },
+        {
+          "time": "07:20:09",
+          "progress": 0.511,
+          "errMin": 5.62
+        },
+        {
+          "time": "07:20:39",
+          "progress": 0.518,
+          "errMin": 5.86
+        },
+        {
+          "time": "07:21:29",
+          "progress": 0.521,
+          "errMin": 6.95
+        },
+        {
+          "time": "07:22:03",
+          "progress": 0.521,
+          "errMin": 7.96
+        },
+        {
+          "time": "07:22:39",
+          "progress": 0.52,
+          "errMin": 9.03
+        },
+        {
+          "time": "07:23:10",
+          "progress": 0.522,
+          "errMin": 9.89
+        },
+        {
+          "time": "07:23:40",
+          "progress": 0.526,
+          "errMin": 10.32
+        },
+        {
+          "time": "07:24:10",
+          "progress": 0.535,
+          "errMin": 10.12
+        },
+        {
+          "time": "07:24:40",
+          "progress": 0.544,
+          "errMin": 9.89
+        },
+        {
+          "time": "07:25:10",
+          "progress": 0.554,
+          "errMin": 9.63
+        },
+        {
+          "time": "07:25:40",
+          "progress": 0.563,
+          "errMin": 9.47
+        },
+        {
+          "time": "07:26:10",
+          "progress": 0.571,
+          "errMin": 9.44
+        },
+        {
+          "time": "07:26:40",
+          "progress": 0.579,
+          "errMin": 9.45
+        },
+        {
+          "time": "07:27:10",
+          "progress": 0.586,
+          "errMin": 9.49
+        },
+        {
+          "time": "07:27:40",
+          "progress": 0.597,
+          "errMin": 9.11
+        },
+        {
+          "time": "07:28:10",
+          "progress": 0.613,
+          "errMin": 8.25
+        },
+        {
+          "time": "07:28:40",
+          "progress": 0.63,
+          "errMin": 7.32
+        },
+        {
+          "time": "07:29:11",
+          "progress": 0.643,
+          "errMin": 6.9
+        },
+        {
+          "time": "07:29:41",
+          "progress": 0.645,
+          "errMin": 7.46
+        },
+        {
+          "time": "07:30:11",
+          "progress": 0.655,
+          "errMin": 7.23
+        },
+        {
+          "time": "07:30:41",
+          "progress": 0.663,
+          "errMin": 7.26
+        },
+        {
+          "time": "07:31:11",
+          "progress": 0.674,
+          "errMin": 6.93
+        },
+        {
+          "time": "07:31:41",
+          "progress": 0.688,
+          "errMin": 6.4
+        },
+        {
+          "time": "07:32:11",
+          "progress": 0.703,
+          "errMin": 5.76
+        },
+        {
+          "time": "07:32:41",
+          "progress": 0.711,
+          "errMin": 5.78
+        },
+        {
+          "time": "07:33:11",
+          "progress": 0.717,
+          "errMin": 5.97
+        },
+        {
+          "time": "07:33:41",
+          "progress": 0.725,
+          "errMin": 5.99
+        },
+        {
+          "time": "07:34:11",
+          "progress": 0.738,
+          "errMin": 5.58
+        },
+        {
+          "time": "07:34:41",
+          "progress": 0.755,
+          "errMin": 4.84
+        },
+        {
+          "time": "07:35:11",
+          "progress": 0.772,
+          "errMin": 4.15
+        },
+        {
+          "time": "07:35:41",
+          "progress": 0.789,
+          "errMin": 3.5
+        },
+        {
+          "time": "07:36:11",
+          "progress": 0.806,
+          "errMin": 2.86
+        },
+        {
+          "time": "07:36:41",
+          "progress": 0.823,
+          "errMin": 2.24
+        },
+        {
+          "time": "07:37:11",
+          "progress": 0.838,
+          "errMin": 1.79
+        },
+        {
+          "time": "07:37:41",
+          "progress": 0.852,
+          "errMin": 1.41
+        },
+        {
+          "time": "07:38:11",
+          "progress": 0.862,
+          "errMin": 1.3
+        },
+        {
+          "time": "07:38:41",
+          "progress": 0.872,
+          "errMin": 1.19
+        },
+        {
+          "time": "07:39:11",
+          "progress": 0.888,
+          "errMin": 0.76
+        },
+        {
+          "time": "07:39:41",
+          "progress": 0.903,
+          "errMin": 0.33
+        },
+        {
+          "time": "07:40:11",
+          "progress": 0.917,
+          "errMin": -0.01
+        },
+        {
+          "time": "07:40:41",
+          "progress": 0.927,
+          "errMin": -0.06
+        },
+        {
+          "time": "07:41:11",
+          "progress": 0.942,
+          "errMin": -0.45
+        }
+      ]
+    }
+  ]
+}

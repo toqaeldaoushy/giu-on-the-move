@@ -48,7 +48,7 @@ ENDPOINT_TOLERANCE_KM = 1.5
 MAX_SPEED_KMH = 120
 SPEED_TOLERANCE_KMH = 2.0
 START_EARLY_MIN, START_LATE_MIN = 5, 20    # allowed start offset from the schedule
-PLANNED_RUN_MIN = 60                       # planned window of a trip, for overlap checks
+PLANNED_RUN_MIN = 71                       # planned window of a trip (the recorded real trip), for overlap checks
 PHONE_FORMAT = re.compile(r"^\+20-000-000-\d{4}$")
 
 results = []
@@ -266,8 +266,8 @@ record(f"Actual start is within -{START_EARLY_MIN} / +{START_LATE_MIN} minutes o
 # ---- 16. Route area and endpoints -----------------------------------------------
 route = q("SELECT lat, lon FROM route_points WHERE route_id = 1 ORDER BY seq")
 first, last = route[0], route[-1]
-lat_lo, lat_hi = min(first[0], last[0]) - ROUTE_MARGIN_DEG, max(first[0], last[0]) + ROUTE_MARGIN_DEG
-lon_lo, lon_hi = min(first[1], last[1]) - ROUTE_MARGIN_DEG, max(first[1], last[1]) + ROUTE_MARGIN_DEG
+lat_lo, lat_hi = min(p[0] for p in route) - ROUTE_MARGIN_DEG, max(p[0] for p in route) + ROUTE_MARGIN_DEG
+lon_lo, lon_hi = min(p[1] for p in route) - ROUTE_MARGIN_DEG, max(p[1] for p in route) + ROUTE_MARGIN_DEG
 outside = sum(1 for ps in pings_by_run.values() for p in ps
               if not (lat_lo <= p[1] <= lat_hi and lon_lo <= p[2] <= lon_hi))
 record("All pings are inside the route area", outside == 0, f"{outside} points outside the route bounding box")
@@ -294,13 +294,37 @@ record(f"Speeds are realistic (0 to {MAX_SPEED_KMH} km/h; each trip starts at 0)
        f"{first_nonzero} trips with a non-zero first speed")
 
 # ---- 18. Speed matches distance moved ------------------------------------------
+# The bus follows the road, so the distance moved is measured ALONG the route: each ping is
+# projected onto the route path, and the implied speed is the change in that position.
+_lat0 = route[0][0]
+_kx, _ky = 111.32 * math.cos(math.radians(_lat0)), 110.574
+_xy = [((p[1] - route[0][1]) * _kx, (p[0] - _lat0) * _ky) for p in route]
+_cum = [0.0]
+for (ax, ay), (bx, by) in zip(_xy, _xy[1:]):
+    _cum.append(_cum[-1] + math.hypot(bx - ax, by - ay))
+
+
+def along_km(lat, lon):
+    px, py = (lon - route[0][1]) * _kx, (lat - _lat0) * _ky
+    best, s = float("inf"), 0.0
+    for i in range(len(_xy) - 1):
+        (ax, ay), (bx, by) = _xy[i], _xy[i + 1]
+        dx, dy = bx - ax, by - ay
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy or 1e-12)))
+        d = math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+        if d < best:
+            best, s = d, _cum[i] + t * (_cum[i + 1] - _cum[i])
+    return s
+
+
 errs = []
 for ps in pings_by_run.values():
-    for a, b in zip(ps, ps[1:]):
-        implied = haversine_km((a[1], a[2]), (b[1], b[2])) / (PING_INTERVAL_S / 3600)
-        errs.append(abs(implied - b[3]))
+    pos = [along_km(p[1], p[2]) for p in ps]
+    for k in range(1, len(ps)):
+        implied = abs(pos[k] - pos[k - 1]) / (PING_INTERVAL_S / 3600)
+        errs.append(abs(implied - ps[k][3]))
 mae = sum(errs) / len(errs)
-record(f"Reported speed matches the distance moved since the previous ping (mean error < {SPEED_TOLERANCE_KMH} km/h)",
+record(f"Reported speed matches the distance moved along the route since the previous ping (mean error < {SPEED_TOLERANCE_KMH} km/h)",
        mae < SPEED_TOLERANCE_KMH, f"mean error {mae:.2f} km/h, max {max(errs):.1f} km/h over {len(errs)} intervals")
 
 # ---- 19. Problem reports ---------------------------------------------------------

@@ -37,10 +37,10 @@ To look inside the database, open `data/giu_on_the_move.db` with DB Browser for 
 | --- | --- |
 | Users | 1 admin, 4 drivers, 10 riders |
 | Buses | 3 (Bus #04, #07, #11), each with its own phone ID |
-| Route and stops | 1 route, 41 path points, 6 stops |
+| Route and stops | 1 route (First Settlement line, 45.0 km), 291 path points, 13 stops |
 | Timetable | 5 trips |
 | Trip runs | 30 (5 trips on each of 6 days, Saturday 3 Oct to Thursday 8 Oct 2026) |
-| GPS pings | 2,150 (one every 30 seconds) |
+| GPS pings | 3,774 (one every 30 seconds) |
 | Problem reports | 3 |
 | Assignment changes | 2 |
 | Alerts | 10 |
@@ -55,10 +55,16 @@ Situations built in: one delayed trip (left 12 minutes late in heavy traffic), o
 | Real | Placeholder or simulated |
 | --- | --- |
 | The timetable (08:00, 10:00, 13:45, 15:30, 17:30) | Names, bus numbers, plates, phone numbers |
-| | The route and the stops (two approximate points, straight line) |
-| | Assignments, delays, GPS pings, reports and alerts |
+| The route and stops, from a GPS trip recorded on a real GIU shuttle (First Settlement line, 22 Nov 2026) | The first 4.75 km of the route, where the phone did not record (a straight line) |
+| The planned trip time, 71 minutes (that trip's duration) | Assignments, delays, GPS pings, reports and alerts |
 
 The phone numbers use the format `+20-000-000-xxxx` so no real number is ever stored. Passwords are not in the data: the backend sets them when it loads the data.
+
+## The real route
+
+`data/real/trip1_2026-11-22.gpx` is the recorded trip: a point every second from Gate 2, El Nakhl (06:33) to GIU (07:45). `python3 scripts/build_real_route.py data/real/trip1_2026-11-22.gpx` turns it into `data/real/route_points.csv`, `stops.csv` and `route_meta.json`; the generator above reads those. Two stops are the places where the recorded bus stood still for at least a minute; nine more are placed on the recorded route to demonstrate the stop features (marked `placed` in `stops.csv`). Between 06:34 and 06:56 the phone did not record, so that part of the route (4.75 km) is a straight line, marked `estimated` in `route_points.csv`.
+
+To move an existing Supabase project to this route without losing logins: `python3 scripts/export_supabase_sql.py`, then `python3 scripts/export_route_switch_sql.py`, then paste `supabase/06_switch_route.sql`, the three `03_gps_pings` parts and `04_finish_and_verify.sql`.
 
 ## Limits
 

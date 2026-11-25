@@ -10,7 +10,7 @@ export const config = {
   jwtSecret: env.JWT_SECRET || null,
   jwtExpires: env.JWT_EXPIRES || '12h',
   simulatedNow: env.SIMULATED_NOW || null,   // e.g. 2026-10-08T13:40:00 (local Cairo time)
-  plannedTripMin: Number(env.PLANNED_TRIP_MIN || 40),      // planned travel time of one trip (placeholder)
+  plannedTripMin: Number(env.PLANNED_TRIP_MIN || 71),      // planned travel time of one trip: the recorded real trip (06:33 to 07:45)
   lateThresholdMin: Number(env.LATE_THRESHOLD_MIN || 5),   // more than this late = "Delayed"
   devPassword: env.DEV_PASSWORD || 'demo1234',
 };

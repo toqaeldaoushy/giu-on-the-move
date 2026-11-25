@@ -1,8 +1,8 @@
 // Shows what a rider's phone would receive for a trip.
 //
-//   npm run watch:rider -- --run 28 --stop 6
+//   npm run watch:rider -- --run 28 --stop 9
 //
-// Options:  --url http://localhost:3000   --user student01   --password demo1234   --run 28   --stop 6 (optional)
+// Options:  --url http://localhost:3000   --user student01   --password demo1234   --run 28   --stop 9 (optional)
 import { io } from 'socket.io-client';
 import { readArgs, api } from './_args.js';
 

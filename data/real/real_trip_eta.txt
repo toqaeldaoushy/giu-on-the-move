@@ -1,0 +1,14 @@
+REAL DATA, ONE TRIP · 2026-11-22 · trip1_2026-11-22.gpx · route 45.0 km
+Recorded 06:33:39 to 07:44:58 (71.3 min); plan 06:30 + 71 min = 07:41:00
+Positions every 30 s: 97; not recorded 06:34:09 to 06:56:06; predictions from 06:56:06, while under 95% of the route: 88
+Stops: Gate 2 (El Nakhl) km 0.0 at 06:33:39 · Stop 5 km 14.2 at 07:07:02 · Stop 9 km 23.4 at 07:20:00 · GIU campus km 45.0 at 07:44:58
+
+Error of the predicted arrival at GIU, minutes (bias: + = predicted too late)
+  Method                            MAE     Bias    Stops ahead  By progress 0-25 / 25-50 / 50-75 / 75-95%
+  Timetable                         4.0     -4.0    13.5         4.0 / 4.0 / 4.0 / 4.0
+  Schedule                          10.5    10.5    3.4          14.0 / 12.1 / 10.4 / 3.4
+  Recent speed                      11.4    10.5    5.1          25.6 / 5.4 / 13.8 / 1.8
+  Blended (first version)           9.1     8.2     3.1          13.6 / 5.4 / 13.8 / 1.8
+  Blended (tuned, now in the app)   10.3    10.3    4.8          24.3 / 8.7 / 7.8 / 1.8
+
+Note: the plan (71 min) is this trip's own duration, which favours the timetable and schedule methods.

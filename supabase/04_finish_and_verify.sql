@@ -20,11 +20,11 @@ from (values
   (1, 'users', 15::numeric),
   (2, 'buses', 3::numeric),
   (3, 'routes', 1::numeric),
-  (4, 'route_points', 41::numeric),
-  (5, 'stops', 6::numeric),
+  (4, 'route_points', 291::numeric),
+  (5, 'stops', 13::numeric),
   (6, 'trips', 5::numeric),
   (7, 'trip_runs', 30::numeric),
-  (8, 'gps_pings', 2150::numeric),
+  (8, 'gps_pings', 3774::numeric),
   (9, 'problem_reports', 3::numeric),
   (10, 'assignment_changes', 2::numeric),
   (11, 'alerts', 10::numeric),
@@ -32,7 +32,7 @@ from (values
   (13, 'trip_runs: completed', 26::numeric),
   (14, 'trip_runs: scheduled', 3::numeric),
   (15, 'trip_runs: cancelled', 1::numeric),
-  (16, 'gps_pings: total of all speeds', 124619.5::numeric)
+  (16, 'gps_pings: total of all speeds', 140389.8::numeric)
 ) as v(n, item, expected)
 join (
   select 'users' as item, (select count(*) from public.users)::numeric as actual
