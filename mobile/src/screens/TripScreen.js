@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, View } from 'react-native';
-import { Bell, BusFront, Phone, User, Users } from 'lucide-react-native';
+import { Armchair, Bell, BusFront, Phone, Star, User, Users } from 'lucide-react-native';
 import { api, connectLive } from '../api';
 import { directionText, radius, space, useStyles, useTheme } from '../theme';
-import { Button, ErrorText, Header, HeroCard, SectionLabel, StatusBadge, T, Tile } from '../components/ui';
+import { Button, ErrorText, Header, HeroCard, SEATS, SectionLabel, StatusBadge, T, Tile, seatsColor } from '../components/ui';
 import BusMap from '../components/BusMap';
+import { getFavoriteStop, setFavoriteStop } from '../favorites';
 
 const timeOf = (stamp) => (stamp ? String(stamp).slice(11, 16) : '');
 
@@ -37,6 +38,23 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
   );
   const [stopId, setStopId] = useState(stops[stops.length - 1].id);
   const stopName = stops.find((s) => s.id === stopId)?.name ?? '';
+
+  // Favorite stop: the trip opens on the rider's usual stop of this line, if they saved one
+  const userId = session.user.id;
+  const [favorite, setFavorite] = useState(null);
+  useEffect(() => {
+    getFavoriteStop(userId, route.id).then((id) => {
+      if (id && stops.some((s) => s.id === id)) {
+        setFavorite(id);
+        setStopId(id);
+      }
+    });
+  }, [userId, route.id, stops]);
+  function toggleFavorite() {
+    const next = favorite === stopId ? null : stopId;
+    setFavorite(next);
+    setFavoriteStop(userId, route.id, next);
+  }
 
   // The latest state of the trip, with the ETA to the chosen stop
   const refresh = useCallback(async () => {
@@ -84,6 +102,7 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
       }
     });
     socket.on('trip:status', (m) => { if (m.runId === run.id) refresh(); });
+    socket.on('trip:occupancy', (m) => { if (m.runId === run.id) setRun((prev) => ({ ...prev, occupancy: { level: m.level, at: m.at } })); });
     socket.on('assignment:changed', (m) => { if (m.runId === run.id) refresh(); });
     return () => socket.disconnect();
   }, [run.id, stopId, token, refresh]);
@@ -139,7 +158,7 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
     <View style={{ flex: 1, backgroundColor: t.background }}>
       <Header
         title={run.label}
-        subtitle={`${run.scheduledTime} · ${directionText[run.direction]}`}
+        subtitle={`${run.scheduledTime}${run.timeChange ? ` (usually ${run.timeChange.usualTime})` : ''} · ${directionText[run.direction]}`}
         onBack={onBack}
         right={<StatusBadge label={live?.statusLabel ?? 'Not started'} />}
       />
@@ -174,11 +193,20 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
             return (
               <Pressable key={s.id} onPress={() => setStopId(s.id)} accessibilityRole="radio" accessibilityState={{ selected: on }}
                 style={[st.chip, on && st.chipOn]}>
-                <T v="caption" color={on ? t.onPrimary : t.text} style={on && { fontFamily: 'PlusJakartaSans_700Bold' }}>{s.name}</T>
+                <View style={st.row}>
+                  {s.id === favorite && <Star size={14} color={on ? t.onPrimary : t.goldText} fill={on ? t.onPrimary : t.goldText} style={{ marginRight: 4 }} />}
+                  <T v="caption" color={on ? t.onPrimary : t.text} style={on && { fontFamily: 'PlusJakartaSans_700Bold' }}>{s.name}</T>
+                </View>
               </Pressable>
             );
           })}
         </ScrollView>
+        <Pressable onPress={toggleFavorite} accessibilityRole="button" hitSlop={8} style={[st.row, { marginTop: space.m, alignSelf: 'flex-start' }]}>
+          <Star size={18} color={t.goldText} fill={favorite === stopId ? t.goldText : 'transparent'} />
+          <T v="strong" color={t.goldText} style={{ marginLeft: 6 }}>
+            {favorite === stopId ? `${stopName} is my usual stop` : `Save ${stopName} as my usual stop`}
+          </T>
+        </Pressable>
 
         {canRemind && (
           <>
@@ -202,6 +230,23 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
                 <T v="caption" color={t.red} onPress={removeReminder} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Remove</T>
               </T>
             )}
+          </>
+        )}
+
+        {run.status === 'in_progress' && (
+          <>
+            <SectionLabel>Seats</SectionLabel>
+            <View style={[st.row, st.seats]}>
+              <Armchair size={22} color={run.occupancy ? seatsColor(t, run.occupancy.level) : t.muted} />
+              <View style={{ flex: 1, marginLeft: space.m }}>
+                <T v="strong" color={run.occupancy ? seatsColor(t, run.occupancy.level) : t.text}>
+                  {run.occupancy ? SEATS[run.occupancy.level].label : 'Not reported yet'}
+                </T>
+                <T v="caption" color={t.muted}>
+                  {run.occupancy ? `Reported by the driver at ${timeOf(run.occupancy.at)}` : 'The driver can report how full the bus is during the trip.'}
+                </T>
+              </View>
+            </View>
           </>
         )}
 
@@ -232,4 +277,5 @@ const makeStyles = (t) => ({
   chipOn: { backgroundColor: t.primary, borderColor: t.primary },
   buttonRow: { flexDirection: 'row', gap: space.s },
   tiles: { flexDirection: 'row', gap: space.s },
+  seats: { backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: space.l },
 });

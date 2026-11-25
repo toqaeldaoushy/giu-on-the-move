@@ -371,3 +371,112 @@ describe('rider alerts', () => {
     assert.equal((await call('DELETE', `/alerts/${a.body.id}`, { token: rider })).status, 404);
   });
 });
+
+describe('lines and timetable changes', () => {
+  let admin; let rider;
+  before(async () => { admin = await login('admin'); rider = await login('student01'); });
+
+  it('lists the lines, gives one line by id, and filters the timetable by line', async () => {
+    const lines = (await call('GET', '/routes', { token: rider })).body.routes;
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0].stopCount, 13);
+    const one = await call('GET', `/route?id=${lines[0].id}`, { token: rider });
+    assert.equal(one.body.stops.length, 13);
+    assert.equal((await call('GET', '/route?id=999', { token: rider })).status, 404);
+    assert.equal((await call('GET', `/timetable?routeId=${lines[0].id}`, { token: rider })).body.runs.length, 5);
+    assert.equal((await call('GET', '/timetable?routeId=999', { token: rider })).body.runs.length, 0);
+    assert.ok((await call('GET', '/timetable', { token: rider })).body.runs.every((r) => r.routeId === lines[0].id));
+  });
+
+  it('moves a trip to a new time for a date range only, shows the usual time, and goes back when removed', async () => {
+    const trips = (await call('GET', '/admin/trips', { token: admin })).body.trips;
+    const late = trips.find((t) => t.scheduledTime === '17:30');
+    const body = { tripId: late.id, newTime: '18:00', fromDate: '2026-10-08', toDate: '2026-10-10', reason: 'Midterms' };
+    assert.equal((await call('POST', '/admin/schedule-changes', { token: rider, body })).status, 403);
+    const made = await call('POST', '/admin/schedule-changes', { token: admin, body });
+    assert.equal(made.status, 201);
+    assert.equal(made.body.usualTime, '17:30');
+    assert.equal(made.body.newTime, '18:00');
+
+    const todayRun = (await call('GET', '/timetable', { token: rider })).body.runs.find((r) => r.tripCode === late.code);
+    assert.equal(todayRun.scheduledTime, '18:00');
+    assert.deepEqual(todayRun.timeChange, { usualTime: '17:30', reason: 'Midterms' });
+    const before = (await call('GET', '/timetable?date=2026-10-07', { token: rider })).body.runs.find((r) => r.tripCode === late.code);
+    assert.equal(before.scheduledTime, '17:30');             // the day before the period keeps the usual time
+    assert.equal(before.timeChange, undefined);
+    const live = await call('GET', `/runs/${todayRun.id}/live`, { token: rider });
+    assert.equal(live.body.scheduledTime, '18:00');
+
+    const listed = (await call('GET', '/admin/schedule-changes', { token: admin })).body.changes;
+    assert.equal(listed.length, 1);
+    assert.equal((await call('DELETE', `/admin/schedule-changes/${made.body.id}`, { token: admin })).status, 200);
+    assert.equal((await call('DELETE', `/admin/schedule-changes/${made.body.id}`, { token: admin })).status, 404);
+    const back = (await call('GET', '/timetable', { token: rider })).body.runs.find((r) => r.tripCode === late.code);
+    assert.equal(back.scheduledTime, '17:30');
+  });
+
+  it('refuses a wrong time, reversed dates, a period that has ended, and the usual time', async () => {
+    const trip = (await call('GET', '/admin/trips', { token: admin })).body.trips[0];
+    const post = (b) => call('POST', '/admin/schedule-changes', { token: admin, body: { tripId: trip.id, newTime: '08:15', fromDate: '2026-10-10', toDate: '2026-10-12', ...b } });
+    assert.equal((await post({ newTime: '8:15' })).status, 400);
+    assert.equal((await post({ newTime: '25:00' })).status, 400);
+    assert.equal((await post({ fromDate: '2026-10-12', toDate: '2026-10-10' })).status, 400);
+    assert.equal((await post({ fromDate: '2026-10-01', toDate: '2026-10-02' })).status, 400);
+    assert.equal((await post({ newTime: trip.scheduledTime })).status, 400);
+    assert.equal((await post({ tripId: 999 })).status, 404);
+  });
+});
+
+describe('seat availability, next shuttle and announcements', () => {
+  let admin; let rider;
+  before(async () => { admin = await login('admin'); rider = await login('student01'); });
+
+  it('lets the driver of a trip in progress report the seats, which riders then see', async () => {
+    const { rows: [run] } = await pool.query(
+      `select r.id, u.username from trip_runs r join trips t on t.id = r.trip_id join users u on u.id = r.driver_id
+        where r.run_date = '2026-10-08' and r.status = 'scheduled' order by t.scheduled_time desc limit 1`);
+    const drv = await login(run.username);
+    assert.equal((await call('POST', `/driver/runs/${run.id}/occupancy`, { token: drv, body: { level: 'few' } })).status, 409); // not started
+    assert.equal((await call('POST', `/driver/runs/${run.id}/start`, { token: drv })).status, 200);
+    assert.equal((await call('POST', `/driver/runs/${run.id}/occupancy`, { token: drv, body: { level: 'lots' } })).status, 400);
+    assert.equal((await call('POST', `/driver/runs/${run.id}/occupancy`, { token: rider, body: { level: 'few' } })).status, 403);
+    const other = (await pool.query(`select username from users where role = 'driver' and username <> $1 limit 1`, [run.username])).rows[0];
+    assert.equal((await call('POST', `/driver/runs/${run.id}/occupancy`, { token: await login(other.username), body: { level: 'few' } })).status, 403);
+
+    const ok = await call('POST', `/driver/runs/${run.id}/occupancy`, { token: drv, body: { level: 'few' } });
+    assert.equal(ok.status, 200);
+    const seen = (await call('GET', `/runs/${run.id}/live`, { token: rider })).body;
+    assert.equal(seen.occupancy.level, 'few');
+    assert.equal((await call('POST', `/driver/runs/${run.id}/end`, { token: drv })).status, 200);
+    assert.equal((await call('GET', `/runs/${run.id}/live`, { token: rider })).body.occupancy, null); // only shown during the trip
+  });
+
+  it('gives the first shuttle of the next day with trips, skipping Friday and following timetable changes', async () => {
+    const tt = (await call('GET', '/timetable', { token: rider })).body;   // Thursday 8 October
+    assert.equal(tt.nextShuttles.length, 1);
+    assert.equal(tt.nextShuttles[0].date, '2026-10-10');                    // Friday 9 October is skipped
+    assert.equal(tt.nextShuttles[0].time, '08:00');
+    const first = (await call('GET', '/admin/trips', { token: admin })).body.trips.find((t) => t.scheduledTime === '08:00');
+    const ch = await call('POST', '/admin/schedule-changes', { token: admin, body: { tripId: first.id, newTime: '08:30', fromDate: '2026-10-10', toDate: '2026-10-10' } });
+    assert.equal((await call('GET', '/timetable', { token: rider })).body.nextShuttles[0].time, '08:30');
+    await call('DELETE', `/admin/schedule-changes/${ch.body.id}`, { token: admin });
+  });
+
+  it('shows an announcement to everyone until the office takes it down, and tells connected apps at once', async () => {
+    assert.equal((await call('POST', '/admin/announcements', { token: rider, body: { message: 'Hi' } })).status, 403);
+    assert.equal((await call('POST', '/admin/announcements', { token: admin, body: { message: '   ' } })).status, 400);
+    assert.equal((await call('POST', '/admin/announcements', { token: admin, body: { message: 'x'.repeat(301) } })).status, 400);
+    const s = await connect(rider);
+    const heard = once(s, 'announcement:new');
+    const made = await call('POST', '/admin/announcements', { token: admin, body: { message: 'Bus 04 is delayed by road works' } });
+    assert.equal(made.status, 201);
+    assert.equal((await heard).message, 'Bus 04 is delayed by road works');
+    const list = (await call('GET', '/announcements', { token: rider })).body.announcements;
+    assert.equal(list[0].message, 'Bus 04 is delayed by road works');
+    const ended = once(s, 'announcement:ended');
+    assert.equal((await call('POST', `/admin/announcements/${made.body.id}/end`, { token: admin })).status, 200);
+    assert.equal((await ended).id, made.body.id);
+    assert.equal((await call('GET', '/announcements', { token: rider })).body.announcements.length, 0);
+    assert.equal((await call('POST', `/admin/announcements/${made.body.id}/end`, { token: admin })).status, 404);
+  });
+});

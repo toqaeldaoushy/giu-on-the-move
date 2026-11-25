@@ -54,6 +54,8 @@ export function useRiderAlerts(session) {
     socket.on('trip:delayed', (m) => {
       notify('Your bus is delayed', `The ${m.scheduledTime} ${m.label} is running about ${m.delayMinutes} minutes late.`, m.runId);
     });
+    // Announcement from the transportation office (e.g. a road closure): every rider is told
+    socket.on('announcement:new', (m) => notify('Transportation office', m.message));
     return () => socket.disconnect();
   }, [token]);
 }

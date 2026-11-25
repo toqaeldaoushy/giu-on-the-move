@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { api, connectLive } from '../api';
 import { directionText, font, radius, space, useStyles, useTheme } from '../theme';
-import { BusFront, Clock, MapPin } from 'lucide-react-native';
-import { Card, ErrorText, Header, TripRow } from '../components/ui';
+import { Armchair, BusFront, CalendarClock, Clock, MapPin } from 'lucide-react-native';
+import { Card, ErrorText, Header, SEATS, TripRow, seatsColor } from '../components/ui';
 import ProfileMenu from '../components/ProfileMenu';
+import AdminTimetable from '../components/AdminTimetable';
+import AdminAnnouncements from '../components/AdminAnnouncements';
 
 const PROBLEM_TEXT = { traffic_delay: 'Traffic delay', breakdown: 'Breakdown', bus_full: 'Bus is full', other: 'Other problem' };
 const timeOf = (stamp) => (stamp ? String(stamp).slice(11, 16) : '');
@@ -56,6 +58,7 @@ export default function AdminHomeScreen({ session, onOpenTrip, onLogout }) {
       load();
     });
     socket.on('trip:status', load);
+    socket.on('trip:occupancy', load);
     socket.on('assignment:changed', load);
     return () => {
       clearInterval(timer);
@@ -95,11 +98,17 @@ export default function AdminHomeScreen({ session, onOpenTrip, onLogout }) {
 
       <View style={styles.tabs} accessibilityRole="tablist">
         <Pressable onPress={() => setTab('trips')} style={[styles.tab, tab === 'trips' && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === 'trips' }}>
-          <Text style={[styles.tabText, tab === 'trips' && styles.tabTextOn]}>Today's trips</Text>
+          <Text style={[styles.tabText, tab === 'trips' && styles.tabTextOn]}>Trips</Text>
         </Pressable>
         <Pressable onPress={openReports} style={[styles.tab, tab === 'reports' && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === 'reports' }}>
           <Text style={[styles.tabText, tab === 'reports' && styles.tabTextOn]}>Reports</Text>
           {unread > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{unread}</Text></View>}
+        </Pressable>
+        <Pressable onPress={() => setTab('timetable')} style={[styles.tab, tab === 'timetable' && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === 'timetable' }}>
+          <Text style={[styles.tabText, tab === 'timetable' && styles.tabTextOn]}>Timetable</Text>
+        </Pressable>
+        <Pressable onPress={() => setTab('notices')} style={[styles.tab, tab === 'notices' && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === 'notices' }}>
+          <Text style={[styles.tabText, tab === 'notices' && styles.tabTextOn]}>Notices</Text>
         </Pressable>
       </View>
 
@@ -132,11 +141,16 @@ export default function AdminHomeScreen({ session, onOpenTrip, onLogout }) {
                 { icon: MapPin, text: directionText[run.direction] },
                 { icon: BusFront, text: `${run.bus ? `Bus ${run.bus.number}` : 'No bus'} · ${run.driver ? run.driver.name : 'No driver'}` },
                 { icon: Clock, text: tripLine(run) },
+                run.occupancy && { icon: Armchair, text: SEATS[run.occupancy.level].label, color: seatsColor(t, run.occupancy.level) },
+                run.timeChange && { icon: CalendarClock, text: `New time (usually ${run.timeChange.usualTime})${run.timeChange.reason ? ` · ${run.timeChange.reason}` : ''}`, color: t.goldText },
               ]}
             />
           ))}
         </>
       )}
+
+      {tab === 'timetable' && <AdminTimetable token={token} />}
+      {tab === 'notices' && <AdminAnnouncements token={token} />}
 
       {tab === 'reports' && (
         <>

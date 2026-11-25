@@ -6,8 +6,8 @@ import { HttpError, toInt, checkDate } from './errors.js';
 import { login, requireAuth, requireRole } from './auth.js';
 import { formatLocal, dateOf, parseLocal } from './time.js';
 import {
-  RUN_SELECT, getRun, getRunOr404, getRoute, loadLive, loadLiveMany, runDto,
-  startRun, endRun, recordPing, reportProblem, changeAssignment,
+  RUN_SELECT, CHANGE_JOIN, getRun, getRunOr404, getRoute, loadLive, loadLiveMany, runDto,
+  startRun, endRun, recordPing, reportProblem, changeAssignment, setOccupancy,
 } from './runs.js';
 
 const DAY_OFF = 5; // Friday (JavaScript: Sunday = 0 ... Friday = 5)
@@ -21,6 +21,30 @@ export function createApp(ctx) {
   const today = () => dateOf(ctx.clock());
   const dateParam = (req) => checkDate(req.query.date ?? today());
 
+  /**
+   * The first shuttle of the next day with trips (Friday is off), one per line, with timetable changes applied.
+   * Shown when no shuttle is left on the day the rider is looking at.
+   */
+  async function nextShuttles(date, routeId) {
+    const found = new Map();
+    for (let i = 1; i <= 7; i++) {
+      const day = dateOf(parseLocal(date) + i * 86400000);
+      if (new Date(parseLocal(day)).getUTCDay() === DAY_OFF) continue;
+      const { rows } = await ctx.pool.query(
+        `select distinct on (t.route_id) t.route_id as "routeId", t.label, t.direction,
+                to_char(coalesce(c.new_time, t.scheduled_time), 'HH24:MI') as time
+           from trips t
+           left join lateral (
+             select x.new_time from schedule_changes x
+              where x.trip_id = t.id and $1::date between x.from_date and x.to_date order by x.id desc limit 1) c on true
+          where ($2::int is null or t.route_id = $2)
+          order by t.route_id, coalesce(c.new_time, t.scheduled_time)`, [day, routeId]);
+      for (const r of rows) if (!found.has(r.routeId)) found.set(r.routeId, { date: day, ...r });
+      if (rows.length) break;   // every line runs on the same days
+    }
+    return [...found.values()];
+  }
+
   // ---- Open endpoints ---------------------------------------------------------------------
   api.get('/health', (req, res) => res.json({ ok: true }));
   api.get('/time', (req, res) => res.json({ now: formatLocal(ctx.clock()), simulated: Boolean(config.simulatedNow) }));
@@ -32,20 +56,46 @@ export function createApp(ctx) {
   api.use(requireAuth);
   api.get('/me', (req, res) => res.json({ user: req.user }));
 
+  // The lines (routes) the shuttles run on, for choosing a line in the app
+  api.get('/routes', async (req, res) => {
+    const { rows } = await ctx.pool.query(
+      `select r.id, r.name, (select count(*) from stops s where s.route_id = r.id)::int as "stopCount"
+         from routes r order by r.id`);
+    res.json({ routes: rows });
+  });
+
+  // One line with its path and stops; without ?id= the first line (as before)
   api.get('/route', async (req, res) => {
-    const { rows } = await ctx.pool.query('select id, name from routes order by id limit 1');
+    const id = req.query.id ? toInt(req.query.id, 'id') : null;
+    const { rows } = id
+      ? await ctx.pool.query('select id, name from routes where id = $1', [id])
+      : await ctx.pool.query('select id, name from routes order by id limit 1');
     if (!rows[0]) throw new HttpError(404, 'No route found');
     const route = await getRoute(ctx, rows[0].id);
     res.json({ id: rows[0].id, name: rows[0].name, points: route.points, stops: route.stops });
   });
 
-  // The timetable of one day, with the live state of each trip
+  // The timetable of one day, with the live state of each trip; ?routeId= keeps one line only
   api.get('/timetable', async (req, res) => {
     const date = dateParam(req);
-    const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 order by t.scheduled_time`, [date]);
+    const routeId = req.query.routeId ? toInt(req.query.routeId, 'routeId') : null;
+    const { rows } = await ctx.pool.query(
+      `${RUN_SELECT} where r.run_date = $1 and ($2::int is null or t.route_id = $2) order by scheduled_time`, [date, routeId]);
     const lives = await loadLiveMany(ctx, rows);
     const runs = rows.map((row, i) => runDto(row, req.user.role, lives[i]));
-    res.json({ date, now: formatLocal(ctx.clock()), runs });
+    res.json({ date, now: formatLocal(ctx.clock()), runs, nextShuttles: await nextShuttles(date, routeId) });
+  });
+
+  // ---- Announcements from the transportation office (shown for 24 hours unless taken down) ------------------
+  const ANNOUNCEMENT_FIELDS = `a.id, a.message, a.created_at as "createdAt", a.ended_at as "endedAt",
+         (a.ended_at is null and a.created_at > $1::timestamp - interval '24 hours') as active`;
+
+  api.get('/announcements', async (req, res) => {
+    const { rows } = await ctx.pool.query(
+      `select ${ANNOUNCEMENT_FIELDS} from announcements a
+        where a.ended_at is null and a.created_at > $1::timestamp - interval '24 hours' and a.created_at <= $1::timestamp
+        order by a.created_at desc limit 5`, [formatLocal(ctx.clock())]);
+    res.json({ announcements: rows });
   });
 
   api.get('/runs/:id/live', async (req, res) => {
@@ -90,9 +140,9 @@ export function createApp(ctx) {
   api.get('/alerts', rider, async (req, res) => {
     const { rows } = await ctx.pool.query(
       `select a.id, a.trip_run_id as "runId", a.stop_id as "stopId", a.minutes_before as "minutesBefore",
-              r.run_date as date, t.code as "tripCode", t.scheduled_time as "scheduledTime"
-         from alerts a join trip_runs r on r.id = a.trip_run_id join trips t on t.id = r.trip_id
-        where a.user_id = $1 order by r.run_date desc, t.scheduled_time`, [req.user.id]);
+              r.run_date as date, t.code as "tripCode", coalesce(sc.new_time, t.scheduled_time) as "scheduledTime"
+         from alerts a join trip_runs r on r.id = a.trip_run_id join trips t on t.id = r.trip_id ${CHANGE_JOIN}
+        where a.user_id = $1 order by r.run_date desc, 6`, [req.user.id]);
     res.json({ alerts: rows.map((a) => ({ ...a, scheduledTime: String(a.scheduledTime).slice(0, 5) })) });
   });
 
@@ -121,12 +171,14 @@ export function createApp(ctx) {
 
   api.get('/driver/runs', driver, async (req, res) => {
     const date = dateParam(req);
-    const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 and r.driver_id = $2 order by t.scheduled_time`, [date, req.user.id]);
+    const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 and r.driver_id = $2 order by scheduled_time`, [date, req.user.id]);
     res.json({ date, runs: rows.map((r) => runDto(r, 'driver')) });
   });
   api.post('/driver/runs/:id/start', driver, async (req, res) => res.json(await startRun(ctx, req.user, toInt(req.params.id, 'id'))));
   api.post('/driver/runs/:id/end', driver, async (req, res) => res.json(await endRun(ctx, req.user, toInt(req.params.id, 'id'))));
   api.post('/driver/runs/:id/pings', driver, async (req, res) => res.json(await recordPing(ctx, req.user, toInt(req.params.id, 'id'), req.body)));
+  api.post('/driver/runs/:id/occupancy', driver, async (req, res) =>
+    res.json(await setOccupancy(ctx, req.user, toInt(req.params.id, 'id'), req.body?.level)));
   api.post('/driver/runs/:id/problems', driver, async (req, res) =>
     res.status(201).json(await reportProblem(ctx, req.user, toInt(req.params.id, 'id'), req.body ?? {})));
 
@@ -136,7 +188,7 @@ export function createApp(ctx) {
 
   admin.get('/overview', async (req, res) => {
     const date = dateParam(req);
-    const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 order by t.scheduled_time`, [date]);
+    const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 order by scheduled_time`, [date]);
     const lives = await loadLiveMany(ctx, rows);
     const runs = rows.map((row, i) => runDto(row, 'admin', lives[i]));
     const counts = {};
@@ -251,6 +303,84 @@ export function createApp(ctx) {
        select id, $1::date, 'scheduled' from trips
        on conflict (trip_id, run_date) do nothing returning id`, [date]);
     res.status(201).json({ date, created: rows.length });
+  });
+
+  // ---- Timetable changes for a date range (midterms, Ramadan...) --------------------------------
+  const CHANGE_FIELDS = `c.id, c.trip_id as "tripId", t.label, t.code as "tripCode", t.direction,
+         to_char(t.scheduled_time, 'HH24:MI') as "usualTime", to_char(c.new_time, 'HH24:MI') as "newTime",
+         to_char(c.from_date, 'YYYY-MM-DD') as "fromDate", to_char(c.to_date, 'YYYY-MM-DD') as "toDate",
+         c.reason, c.created_at as "createdAt"`;
+
+  admin.get('/trips', async (req, res) => {
+    const { rows } = await ctx.pool.query(
+      `select t.id, t.code, t.label, t.direction, t.route_id as "routeId", ro.name as "routeName",
+              to_char(t.scheduled_time, 'HH24:MI') as "scheduledTime"
+         from trips t join routes ro on ro.id = t.route_id order by t.route_id, t.scheduled_time`);
+    res.json({ trips: rows });
+  });
+
+  admin.get('/schedule-changes', async (req, res) => {
+    // Changes that are still running or start later; ?all=1 also lists the ones that have ended
+    const all = req.query.all === '1';
+    const { rows } = await ctx.pool.query(
+      `select ${CHANGE_FIELDS} from schedule_changes c join trips t on t.id = c.trip_id
+        where $1 or c.to_date >= $2::date order by c.from_date, t.scheduled_time`, [all, today()]);
+    res.json({ today: today(), changes: rows });
+  });
+
+  admin.post('/schedule-changes', async (req, res) => {
+    const b = req.body ?? {};
+    const tripId = toInt(b.tripId, 'tripId');
+    const newTime = String(b.newTime ?? '');
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(newTime)) throw new HttpError(400, 'newTime must be a time like 05:45');
+    const fromDate = checkDate(b.fromDate, 'fromDate');
+    const toDate = checkDate(b.toDate, 'toDate');
+    if (fromDate > toDate) throw new HttpError(400, 'The end date must be on or after the start date');
+    if (toDate < today()) throw new HttpError(400, 'This period has already ended');
+    const trip = (await ctx.pool.query(`select id, to_char(scheduled_time, 'HH24:MI') as t from trips where id = $1`, [tripId])).rows[0];
+    if (!trip) throw new HttpError(404, 'Trip not found');
+    if (trip.t === newTime) throw new HttpError(400, 'That is already the usual time of this trip');
+    const reason = b.reason ? String(b.reason).trim().slice(0, 200) : null;
+    const ins = await ctx.pool.query(
+      `insert into schedule_changes (trip_id, new_time, from_date, to_date, reason, created_by, created_at)
+       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      [tripId, newTime, fromDate, toDate, reason, req.user.id, formatLocal(ctx.clock())]);
+    const { rows } = await ctx.pool.query(
+      `select ${CHANGE_FIELDS} from schedule_changes c join trips t on t.id = c.trip_id where c.id = $1`, [ins.rows[0].id]);
+    ctx.io?.emit('timetable:changed', { tripId, fromDate, toDate });
+    res.status(201).json(rows[0]);
+  });
+
+  admin.delete('/schedule-changes/:id', async (req, res) => {
+    const r = await ctx.pool.query('delete from schedule_changes where id = $1 returning trip_id', [toInt(req.params.id, 'id')]);
+    if (!r.rowCount) throw new HttpError(404, 'Timetable change not found');
+    ctx.io?.emit('timetable:changed', { tripId: r.rows[0].trip_id });
+    res.json({ ok: true });
+  });
+
+  admin.get('/announcements', async (req, res) => {
+    const { rows } = await ctx.pool.query(
+      `select ${ANNOUNCEMENT_FIELDS} from announcements a order by a.created_at desc limit 20`, [formatLocal(ctx.clock())]);
+    res.json({ announcements: rows });
+  });
+
+  admin.post('/announcements', async (req, res) => {
+    const message = String(req.body?.message ?? '').trim();
+    if (!message) throw new HttpError(400, 'Write a message first');
+    if (message.length > 300) throw new HttpError(400, 'The message can have at most 300 characters');
+    const { rows } = await ctx.pool.query(
+      `insert into announcements (message, created_by, created_at) values ($1, $2, $3)
+       returning id, message, created_at as "createdAt"`, [message, req.user.id, formatLocal(ctx.clock())]);
+    ctx.io?.emit('announcement:new', rows[0]);
+    res.status(201).json(rows[0]);
+  });
+
+  admin.post('/announcements/:id/end', async (req, res) => {
+    const id = toInt(req.params.id, 'id');
+    const r = await ctx.pool.query('update announcements set ended_at = $2 where id = $1 and ended_at is null', [id, formatLocal(ctx.clock())]);
+    if (!r.rowCount) throw new HttpError(404, 'Announcement not found or already ended');
+    ctx.io?.emit('announcement:ended', { id });
+    res.json({ ok: true });
   });
 
   admin.get('/reports', async (req, res) => {

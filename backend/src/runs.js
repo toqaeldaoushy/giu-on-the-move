@@ -4,14 +4,26 @@ import { computeLive } from './eta.js';
 import { config } from './config.js';
 import { formatLocal, parseLocal } from './time.js';
 
-/** One trip run with its trip, bus and driver. Add a WHERE clause after it. */
+/**
+ * The timetable change that applies to a run on its date, if the administrator made one (the newest wins).
+ * Needs "r" (trip_runs) and "t" (trips) in the query; gives "sc.new_time" and "sc.reason".
+ */
+export const CHANGE_JOIN = `
+    left join lateral (
+      select c.new_time, c.reason from schedule_changes c
+       where c.trip_id = t.id and r.run_date between c.from_date and c.to_date
+       order by c.id desc limit 1) sc on true`;
+
+/** One trip run with its trip, bus and driver; scheduled_time already includes a timetable change. Add a WHERE clause after it. */
 export const RUN_SELECT = `
-  select r.id, r.run_date, r.status, r.actual_start, r.actual_end, r.bus_id, r.driver_id,
-         t.id as trip_id, t.code, t.label, t.direction, t.scheduled_time, t.route_id,
+  select r.id, r.run_date, r.status, r.actual_start, r.actual_end, r.bus_id, r.driver_id, r.occupancy, r.occupancy_at,
+         t.id as trip_id, t.code, t.label, t.direction, t.route_id,
+         coalesce(sc.new_time, t.scheduled_time) as scheduled_time, t.scheduled_time as usual_time, sc.reason as change_reason,
          b.bus_number, b.plate, b.device_id, b.status as bus_status,
          u.name as driver_name, u.phone as driver_phone, u.share_phone
     from trip_runs r
     join trips t on t.id = r.trip_id
+    ${CHANGE_JOIN}
     left join buses b on b.id = r.bus_id
     left join users u on u.id = r.driver_id`;
 
@@ -66,10 +78,16 @@ export function runDto(row, role, live = null) {
     label: row.label,
     direction: row.direction,
     scheduledTime: String(row.scheduled_time).slice(0, 5),
+    ...(row.usual_time && String(row.usual_time) !== String(row.scheduled_time)
+      ? { timeChange: { usualTime: String(row.usual_time).slice(0, 5), reason: row.change_reason ?? null } }
+      : {}),
+    routeId: row.route_id,
     bus: row.bus_id ? { id: row.bus_id, number: row.bus_number, plate: row.plate } : null,
     driver: row.driver_id
       ? { id: row.driver_id, name: row.driver_name, phone, ...(role === 'admin' ? { sharesPhone: row.share_phone } : {}) }
       : null,
+    // Seat availability, as the driver last reported it during the trip
+    occupancy: row.occupancy && row.status === 'in_progress' ? { level: row.occupancy, at: row.occupancy_at } : null,
     actualStart: row.actual_start,
     actualEnd: row.actual_end,
     live,
@@ -262,8 +280,8 @@ export async function changeAssignment(ctx, admin, runId, { busId, driverId, rea
 
     // The same driver or bus cannot be on two trips that overlap on the same day
     const others = await db.query(
-      `select r.id, r.bus_id, r.driver_id, t.scheduled_time
-         from trip_runs r join trips t on t.id = r.trip_id
+      `select r.id, r.bus_id, r.driver_id, coalesce(sc.new_time, t.scheduled_time) as scheduled_time
+         from trip_runs r join trips t on t.id = r.trip_id ${CHANGE_JOIN}
         where r.run_date = $1 and r.id <> $2 and r.status <> 'cancelled' and (r.bus_id = $3 or r.driver_id = $4)`,
       [run.run_date, runId, newBus, newDriver]);
     const mine = parseLocal(`${run.run_date}T${run.scheduled_time}`);
@@ -290,4 +308,20 @@ export async function changeAssignment(ctx, admin, runId, { busId, driverId, rea
   for (const id of new Set([run.driver_id, newDriver])) if (id != null) room = room?.to(`user:${id}`);
   room?.emit('assignment:changed', event);
   return { ok: true, ...event };
+}
+
+// ---- Seat availability ---------------------------------------------------------------------
+
+export const OCCUPANCY = ['seats', 'few', 'full'];
+
+/** The driver taps how full the bus is; riders on the trip and the office see it at once. */
+export async function setOccupancy(ctx, user, runId, level) {
+  if (!OCCUPANCY.includes(level)) throw new HttpError(400, 'level must be seats, few or full');
+  const run = await getRunOr404(ctx.pool, runId);
+  if (run.driver_id !== user.id) throw new HttpError(403, 'This trip is not assigned to you');
+  if (run.status !== 'in_progress') throw new HttpError(409, 'Seat availability can only be set during the trip');
+  const at = formatLocal(ctx.clock());
+  await ctx.pool.query('update trip_runs set occupancy = $2, occupancy_at = $3 where id = $1', [runId, level, at]);
+  ctx.io?.to(`run:${runId}`).to('admin').emit('trip:occupancy', { runId, level, at });
+  return { ok: true, level, at };
 }

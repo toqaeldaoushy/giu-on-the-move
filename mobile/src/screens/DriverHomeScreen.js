@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
-import { BusFront, ChevronRight, Clock, MapPin } from 'lucide-react-native';
+import { BusFront, ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react-native';
 import { api } from '../api';
 import { directionText, space, useTheme } from '../theme';
 import { Card, ErrorText, Header, HeroCard, SectionLabel, StatusBadge, T, TripRow } from '../components/ui';
 import ProfileMenu from '../components/ProfileMenu';
+import { useLang } from '../i18n';
 
 // What the driver sees on each trip card
 const statusText = {
@@ -24,6 +25,8 @@ const badgeLabel = {
 export default function DriverHomeScreen({ session, onOpenTrip, onLogout }) {
   const { token, user } = session;
   const { t } = useTheme();
+  const { tr, rtl } = useLang();
+  const Next = rtl ? ChevronLeft : ChevronRight;
   const [menu, setMenu] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -56,7 +59,7 @@ export default function DriverHomeScreen({ session, onOpenTrip, onLogout }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.background }}>
-      <Header title={`Hi, ${user.name}`} subtitle={`Driver${data ? ` · ${data.date}` : ''}`} onProfile={() => setMenu(true)} />
+      <Header title={tr('Hi, {name}', { name: user.name })} subtitle={`${tr('Driver')}${data ? ` · ${data.date}` : ''}`} onProfile={() => setMenu(true)} />
       <ScrollView
         contentContainerStyle={{ padding: space.xl, paddingBottom: 48 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={t.gold} />}
@@ -67,38 +70,38 @@ export default function DriverHomeScreen({ session, onOpenTrip, onLogout }) {
           <Pressable onPress={() => onOpenTrip(current)} accessibilityRole="button">
             <HeroCard style={{ marginTop: space.s }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <T v="label" color={t.onHeroMuted} style={{ flex: 1 }}>{current.status === 'in_progress' ? 'Trip on the road' : 'Your next trip'}</T>
+                <T v="label" color={t.onHeroMuted} style={{ flex: 1 }}>{tr(current.status === 'in_progress' ? 'Trip on the road' : 'Your next trip')}</T>
                 <StatusBadge label={badgeLabel[current.status]} />
               </View>
               <T v="display" color={t.onHero} style={{ marginTop: space.s }}>{current.scheduledTime}</T>
-              <T v="title2" color={t.onHero}>{current.label}</T>
+              <T v="title2" color={t.onHero}>{tr(current.label)}</T>
               <T v="caption" color={t.onHeroMuted} style={{ marginTop: 2 }}>
-                {directionText[current.direction]}{current.bus ? ` · Bus ${current.bus.number} (${current.bus.plate})` : ' · No bus assigned yet'}
+                {tr(directionText[current.direction])} · {current.bus ? `${tr('Bus {number}', { number: current.bus.number })} (${current.bus.plate})` : tr('No bus assigned yet')}
               </T>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: space.l }}>
-                <T v="strong" color={t.onHero}>{current.status === 'in_progress' ? 'Open trip' : 'Open and start'}</T>
-                <ChevronRight size={20} color={t.onHero} />
+                <T v="strong" color={t.onHero}>{tr(current.status === 'in_progress' ? 'Open trip' : 'Open and start')}</T>
+                <Next size={20} color={t.onHero} />
               </View>
             </HeroCard>
           </Pressable>
         )}
 
         {data && runs.length === 0 && (
-          <Card style={{ marginTop: space.s }}><T color={t.muted}>You have no trips assigned today. Pull down to check again.</T></Card>
+          <Card style={{ marginTop: space.s }}><T color={t.muted}>{tr('You have no trips assigned today. Pull down to check again.')}</T></Card>
         )}
 
-        {runs.length > 0 && <SectionLabel>My trips today</SectionLabel>}
+        {runs.length > 0 && <SectionLabel>{tr('My trips today')}</SectionLabel>}
         {runs.map((run) => (
           <TripRow
             key={run.id}
             time={run.scheduledTime}
-            title={run.label}
+            title={tr(run.label)}
             badge={badgeLabel[run.status]}
             onPress={() => onOpenTrip(run)}
             lines={[
-              { icon: MapPin, text: directionText[run.direction] },
-              { icon: BusFront, text: run.bus ? `Bus ${run.bus.number}` : 'No bus assigned yet' },
-              { icon: Clock, text: statusText[run.status] },
+              { icon: MapPin, text: tr(directionText[run.direction]) },
+              { icon: BusFront, text: run.bus ? tr('Bus {number}', { number: run.bus.number }) : tr('No bus assigned yet') },
+              { icon: Clock, text: run.timeChange ? tr('New time (usually {time})', { time: run.timeChange.usualTime }) : tr(statusText[run.status]), color: run.timeChange ? t.goldText : undefined },
             ]}
           />
         ))}

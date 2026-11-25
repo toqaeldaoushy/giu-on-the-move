@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
-import { Bell, ChevronRight, Clock, MapPin, Trash2 } from 'lucide-react-native';
+import { Armchair, Bell, CalendarClock, ChevronRight, Clock, MapPin, Megaphone, Route, Trash2 } from 'lucide-react-native';
 import { api } from '../api';
 import { directionText, radius, space, useStyles, useTheme } from '../theme';
-import { Card, ErrorText, Header, HeroCard, Pill, SectionLabel, Segmented, StatusBadge, T, TripRow } from '../components/ui';
+import { Card, ErrorText, Header, HeroCard, Pill, SEATS, SectionLabel, Segmented, StatusBadge, T, TripRow, seatsColor } from '../components/ui';
 import ProfileMenu from '../components/ProfileMenu';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -30,6 +30,11 @@ function countdownText(run, data, fetchedAt) {
   return `Leaves in ${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} min`;
 }
 
+/** "New time today (usually 17:30) · Midterms" */
+function changeText(change) {
+  return `New time (usually ${change.usualTime})${change.reason ? ` · ${change.reason}` : ''}`;
+}
+
 function tripLine(run) {
   const live = run.live ?? {};
   if (run.status === 'in_progress') return live.etaMinutes != null ? `On the road · arrives in ${live.etaMinutes} min` : 'On the road';
@@ -38,7 +43,7 @@ function tripLine(run) {
   return `Departs at ${run.scheduledTime}`;
 }
 
-export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }) {
+export default function TimetableScreen({ session, stops, lines = [], lineId, onChooseLine, onOpenTrip, onLogout }) {
   const { token, user } = session;
   const { t } = useTheme();
   const s = useStyles(makeStyles);
@@ -46,6 +51,7 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
   const [direction, setDirection] = useState('all');
   const [data, setData] = useState(null);
   const [alerts, setAlerts] = useState([]);
+  const [notices, setNotices] = useState([]);       // announcements from the transportation office
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [fetchedAt, setFetchedAt] = useState(0);   // when the server's time was read
@@ -53,8 +59,11 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
 
   const load = useCallback(async () => {
     try {
-      const [tt, al] = await Promise.all([api('/timetable', { token }), api('/alerts', { token })]);
+      const [tt, al, an] = await Promise.all([
+        api('/timetable', { token }), api('/alerts', { token }), api('/announcements', { token }).catch(() => ({ announcements: [] })),
+      ]);
       setData(tt);
+      setNotices(an.announcements);
       setFetchedAt(Date.now());
       setAlerts(al.alerts.filter((a) => a.date === tt.date));
       setError('');
@@ -99,10 +108,15 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
   }
 
   const stopName = (id) => stops.find((s) => s.id === id)?.name ?? `Stop ${id}`;
-  const runs = data?.runs ?? [];
+  // With several lines, only the chosen line's trips are shown
+  const runs = (data?.runs ?? []).filter((r) => lines.length < 2 || r.routeId === lineId);
   const next = runs.find((r) => r.status === 'scheduled' || r.status === 'in_progress');
   const shown = runs.filter((r) => direction === 'all' || r.direction === direction);
   const countdown = next ? countdownText(next, data, fetchedAt) : null;
+  // When nothing is left today: the first shuttle of the next day with trips (on the chosen line)
+  const upcoming = !next && data
+    ? (data.nextShuttles ?? []).find((n) => lines.length < 2 || n.routeId === lineId) ?? null
+    : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: t.background }}>
@@ -117,6 +131,34 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
       >
         <ErrorText message={error} />
 
+        {notices.map((n) => (
+          <View key={n.id} style={s.notice} accessibilityRole="alert">
+            <Megaphone size={20} color={t.goldText} />
+            <View style={{ flex: 1, marginLeft: space.m }}>
+              <T v="label" color={t.goldText}>Transportation office · {timeOf(n.createdAt)}</T>
+              <T v="body" style={{ marginTop: 2 }}>{n.message}</T>
+            </View>
+          </View>
+        ))}
+
+        {lines.length > 1 && (
+          <>
+            <T v="label" color={t.muted} style={{ marginBottom: space.s }}>Line</T>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.s, paddingBottom: space.m }}>
+              {lines.map((l) => {
+                const on = l.id === lineId;
+                return (
+                  <Pressable key={l.id} onPress={() => onChooseLine(l.id)} accessibilityRole="radio" accessibilityState={{ selected: on }}
+                    style={[s.chip, on && s.chipOn]}>
+                    <Route size={16} color={on ? t.onPrimary : t.goldText} />
+                    <T v="caption" color={on ? t.onPrimary : t.text} style={{ marginLeft: 6, fontFamily: on ? 'PlusJakartaSans_700Bold' : undefined }}>{l.name}</T>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
+
         {next && (
           <Pressable onPress={() => onOpenTrip(next)} accessibilityRole="button" accessibilityLabel={`Next shuttle at ${next.scheduledTime}. Track this bus`}>
             <HeroCard style={{ marginTop: space.s }}>
@@ -129,6 +171,11 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
               <T v="caption" color={t.onHeroMuted} style={{ marginTop: 2 }}>
                 {directionText[next.direction]}{next.bus ? ` · Bus ${next.bus.number}` : ''} · {tripLine(next)}
               </T>
+              {next.timeChange && (
+                <T v="caption" color={t.onHero} style={{ marginTop: 2, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  {changeText(next.timeChange)}
+                </T>
+              )}
               <View style={[s.row, { marginTop: space.l }]}>
                 <View style={{ flex: 1 }}>{countdown && <Pill text={countdown} tone={t.mode === 'night' ? 'plain' : 'gold'} />}</View>
                 <T v="strong" color={t.onHero}>Track this bus</T>
@@ -138,9 +185,16 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
           </Pressable>
         )}
 
-        {data && runs.length === 0 && (
+        {data && !next && (
           <Card style={{ marginTop: space.s }}>
-            <T color={t.muted}>No shuttles today. The buses run Saturday to Thursday.</T>
+            <T v="label" color={t.muted}>{runs.length === 0 ? 'No shuttles today' : 'No more shuttles today'}</T>
+            {upcoming ? (
+              <>
+                <T v="title2" style={{ marginTop: space.s }}>Next shuttle: {niceDate(upcoming.date)} at {upcoming.time}</T>
+                <T v="caption" color={t.muted}>{upcoming.label} · {directionText[upcoming.direction]}</T>
+              </>
+            ) : null}
+            {runs.length === 0 && <T v="caption" color={t.muted} style={{ marginTop: space.s }}>The buses run Saturday to Thursday.</T>}
           </Card>
         )}
 
@@ -165,6 +219,8 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
             lines={[
               { icon: MapPin, text: `${directionText[run.direction]}${run.bus ? ` · Bus ${run.bus.number}` : ''}` },
               { icon: Clock, text: tripLine(run) },
+              run.occupancy && { icon: Armchair, text: SEATS[run.occupancy.level].label, color: seatsColor(t, run.occupancy.level) },
+              run.timeChange && { icon: CalendarClock, text: changeText(run.timeChange), color: t.goldText },
             ]}
           />
         ))}
@@ -194,6 +250,9 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
 }
 
 const makeStyles = (t) => ({
+  notice: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: t.goldTint, borderRadius: radius.card, padding: space.l, marginBottom: space.m, borderWidth: 1, borderColor: t.gold },
+  chip: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.pill, paddingHorizontal: 14, height: 40 },
+  chipOn: { backgroundColor: t.primary, borderColor: t.primary },
   content: { padding: space.xl, paddingBottom: 48 },
   row: { flexDirection: 'row', alignItems: 'center' },
   tripCard: { marginBottom: space.m },
