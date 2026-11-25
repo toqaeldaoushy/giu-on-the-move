@@ -171,7 +171,13 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
     assert.equal((await call('POST', `/driver/runs/${RUN}/start`, { token: driverToken })).status, 409);
   });
 
-  it('sends each position to the rider with a falling ETA', async () => {
+  it('sends each position to the rider with a falling ETA, and alerts the rider once before their stop', async () => {
+    // The 13:45 trip is outbound (campus -> pickup), so its last stop is the first stop of the route.
+    const lastStop = route.stops[0];
+    assert.equal((await call('POST', '/alerts', { token: riderToken, body: { runId: RUN, stopId: lastStop.id, minutesBefore: 10 } })).status, 201);
+    const alerts = [];
+    const onAlert = (m) => alerts.push(m);
+    riderSock.on('alert:due', onAlert);
     const etas = [];
     for (const [i, f] of [0.05, 0.25, 0.5, 0.75, 0.97].entries()) {
       const event = once(riderSock, 'bus:position');
@@ -189,6 +195,13 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
     // 0.25 x 38 + 0.75 x 80 = 69.5 km/h -> 22.5 km in about 19 min.
     assert.ok(etas[2] >= 17 && etas[2] <= 21, `half way: about 19 min, got ${etas[2]}`);
     assert.ok(etas[4] <= 1, `almost there: ${etas[4]}`);
+    // The alert goes out once, when the stop is 10 minutes away or less (here at 75% of the way, about 10 min left).
+    await new Promise((r) => setTimeout(r, 200));
+    riderSock.off('alert:due', onAlert);
+    assert.equal(alerts.length, 1, `one alert expected, got ${alerts.length}`);
+    assert.equal(alerts[0].stopId, lastStop.id);
+    assert.ok(alerts[0].etaMinutes <= 10);
+    assert.equal((await call('DELETE', `/alerts/${alerts[0].alertId}`, { token: riderToken })).status, 200);
   });
 
   it('ignores a repeated position and refuses invalid ones', async () => {

@@ -13,6 +13,7 @@ import DriverHomeScreen from './src/screens/DriverHomeScreen';
 import DriverTripScreen from './src/screens/DriverTripScreen';
 import AdminHomeScreen from './src/screens/AdminHomeScreen';
 import AdminTripScreen from './src/screens/AdminTripScreen';
+import { useRiderAlerts } from './src/useRiderAlerts';
 
 const SESSION_KEY = 'giu-session';
 
@@ -22,6 +23,9 @@ export default function App() {
   const [openRun, setOpenRun] = useState(null); // the trip the rider or driver is looking at
   const [starting, setStarting] = useState(true);
   const [error, setError] = useState('');
+
+  // Riders get a phone notification when the bus is the chosen minutes from their stop (FR4)
+  useRiderAlerts(session);
 
   // Stay logged in between app starts (the token is valid for 12 hours)
   useEffect(() => {

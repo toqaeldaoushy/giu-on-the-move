@@ -172,7 +172,35 @@ export async function recordPing(ctx, user, runId, payload) {
     etaMinutes: live.etaMinutes, statusLabel: live.statusLabel, delayMinutes: live.delayMinutes,
     progress: live.progress, remainingKm: live.remainingKm,
   });
+  await sendDueAlerts(ctx, run);
   return { ok: true, id: ins.rows[0].id, live };
+}
+
+/**
+ * Rider alerts (FR4): after each new position, every alert of this trip whose stop is now
+ * "minutes before" away or less is sent once to the rider's phone over the live connection
+ * ("alert:due"); the app shows it as a notification. Positions arrive every 30 s, so an alert
+ * goes out within 30 s of the chosen lead time. Which alerts were sent is kept in memory: after a
+ * server restart an alert can be sent once more, which is better than not at all.
+ */
+async function sendDueAlerts(ctx, run) {
+  ctx.sentAlerts ??= new Set();
+  const { rows } = await ctx.pool.query(
+    `select a.id, a.user_id, a.stop_id, a.minutes_before, s.name as stop_name
+       from alerts a join stops s on s.id = a.stop_id where a.trip_run_id = $1`, [run.id]);
+  const due = rows.filter((a) => !ctx.sentAlerts.has(`${a.id}:${a.minutes_before}`));
+  if (!due.length) return;
+  const liveByStop = new Map();
+  for (const a of due) {
+    if (!liveByStop.has(a.stop_id)) liveByStop.set(a.stop_id, await loadLive(ctx, run, { stopId: a.stop_id }));
+    const stop = liveByStop.get(a.stop_id).stop;
+    if (!stop || stop.passed || stop.etaMinutes == null || stop.etaMinutes > a.minutes_before) continue;
+    ctx.sentAlerts.add(`${a.id}:${a.minutes_before}`);
+    ctx.io?.to(`user:${a.user_id}`).emit('alert:due', {
+      alertId: a.id, runId: run.id, stopId: a.stop_id, stopName: a.stop_name,
+      minutesBefore: a.minutes_before, etaMinutes: stop.etaMinutes,
+    });
+  }
 }
 
 export const PROBLEM_TYPES = ['traffic_delay', 'breakdown', 'bus_full', 'other'];
