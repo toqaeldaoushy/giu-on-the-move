@@ -4,6 +4,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { api } from '../api';
 import { colors, directionText } from '../theme';
 import { Button, Card, ErrorText, StatusBadge } from '../components/ui';
+import BusMap from '../components/BusMap';
 import { askLocationPermission, useLocationSharing } from '../useLocationSharing';
 
 const PROBLEMS = [
@@ -23,7 +24,7 @@ function KeepAwake() {
 }
 
 /** One trip for the driver: start it, share the bus position, report a problem, end it. */
-export default function DriverTripScreen({ session, run: initialRun, onBack }) {
+export default function DriverTripScreen({ session, route, run: initialRun, onBack }) {
   const { token } = session;
   const [run, setRun] = useState(initialRun);
   const [paused, setPaused] = useState(false);
@@ -35,7 +36,9 @@ export default function DriverTripScreen({ session, run: initialRun, onBack }) {
   const [note, setNote] = useState('');
 
   const onRoad = run.status === 'in_progress';
-  const { stats, gpsError } = useLocationSharing({ token, runId: run.id, active: onRoad && !paused });
+  const { stats, gpsError, position } = useLocationSharing({ token, runId: run.id, active: onRoad && !paused });
+  // On the map: the phone's own GPS while sharing, otherwise the last position the server has
+  const mapPosition = position ?? run.live?.position ?? null;
 
   const reload = useCallback(async () => {
     try {
@@ -131,6 +134,12 @@ export default function DriverTripScreen({ session, run: initialRun, onBack }) {
         <Text style={styles.muted}>{run.bus ? `Bus ${run.bus.number} · ${run.bus.plate}` : 'No bus assigned yet. Contact the transportation office.'}</Text>
       </Card>
 
+      {route ? (
+        <View style={styles.map}>
+          <BusMap route={route} position={onRoad || run.status === 'completed' ? mapPosition : null} />
+        </View>
+      ) : null}
+
       <ErrorText message={error} />
       {message ? <Text style={styles.message}>{message}</Text> : null}
 
@@ -220,6 +229,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, paddingBottom: 40 },
   back: { color: colors.primary, fontWeight: '600', fontSize: 16 },
+  map: { marginTop: 12 },
   row: { flexDirection: 'row', alignItems: 'center' },
   row2: { flexDirection: 'row', marginTop: 12 },
   time: { fontSize: 34, fontWeight: '700', color: colors.text, marginRight: 12 },

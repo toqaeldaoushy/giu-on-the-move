@@ -23,6 +23,7 @@ export function useLocationSharing({ token, runId, active }) {
   const sending = useRef(false);
   const [stats, setStats] = useState({ sent: 0, stored: 0, failed: 0, lastSentAt: null, lastError: '' });
   const [gpsError, setGpsError] = useState('');
+  const [position, setPosition] = useState(null); // the newest fix, for the driver's own map
 
   useEffect(() => {
     if (!active) return undefined;
@@ -66,6 +67,7 @@ export function useLocationSharing({ token, runId, active }) {
           { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 0 },
           (fix) => {
             latest.current = fix;
+            setPosition({ lat: fix.coords.latitude, lon: fix.coords.longitude });
             setGpsError('');
             if (!firstSent) { // send the first position at once, then every 30 seconds
               firstSent = true;
@@ -88,5 +90,5 @@ export function useLocationSharing({ token, runId, active }) {
     };
   }, [active, runId, token]);
 
-  return { stats, gpsError };
+  return { stats, gpsError, position };
 }

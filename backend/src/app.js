@@ -6,7 +6,7 @@ import { HttpError, toInt, checkDate } from './errors.js';
 import { login, requireAuth, requireRole } from './auth.js';
 import { formatLocal, dateOf, parseLocal } from './time.js';
 import {
-  RUN_SELECT, getRun, getRunOr404, getRoute, loadLive, runDto,
+  RUN_SELECT, getRun, getRunOr404, getRoute, loadLive, loadLiveMany, runDto,
   startRun, endRun, recordPing, reportProblem, changeAssignment,
 } from './runs.js';
 
@@ -43,8 +43,8 @@ export function createApp(ctx) {
   api.get('/timetable', async (req, res) => {
     const date = dateParam(req);
     const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 order by t.scheduled_time`, [date]);
-    const runs = [];
-    for (const row of rows) runs.push(runDto(row, req.user.role, await loadLive(ctx, row)));
+    const lives = await loadLiveMany(ctx, rows);
+    const runs = rows.map((row, i) => runDto(row, req.user.role, lives[i]));
     res.json({ date, now: formatLocal(ctx.clock()), runs });
   });
 
@@ -137,8 +137,8 @@ export function createApp(ctx) {
   admin.get('/overview', async (req, res) => {
     const date = dateParam(req);
     const { rows } = await ctx.pool.query(`${RUN_SELECT} where r.run_date = $1 order by t.scheduled_time`, [date]);
-    const runs = [];
-    for (const row of rows) runs.push(runDto(row, 'admin', await loadLive(ctx, row)));
+    const lives = await loadLiveMany(ctx, rows);
+    const runs = rows.map((row, i) => runDto(row, 'admin', lives[i]));
     const counts = {};
     for (const r of runs) counts[r.status] = (counts[r.status] ?? 0) + 1;
     res.json({ date, now: formatLocal(ctx.clock()), counts, unassigned: runs.filter((r) => !r.bus || !r.driver).length, runs });

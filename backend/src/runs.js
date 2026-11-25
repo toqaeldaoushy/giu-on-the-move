@@ -37,13 +37,22 @@ export async function getRoute(ctx, routeId) {
 
 export async function loadLive(ctx, run, { stopId } = {}) {
   const route = await getRoute(ctx, run.route_id);
-  const { rows } = await ctx.pool.query(
-    `select "timestamp", lat, lon, speed_kmh from gps_pings
-      where trip_run_id = $1 order by "timestamp" desc limit 6`, [run.id]);
-  const avg = await ctx.pool.query(
-    'select avg(speed_kmh)::float as avg from gps_pings where trip_run_id = $1', [run.id]);
   const stop = stopId ? route.stops.find((s) => s.id === Number(stopId)) ?? null : null;
-  return computeLive({ run, route: route.geo, pings: rows.reverse(), stop, avgSpeedKmh: avg.rows[0].avg });
+  // A trip that has not started (or was cancelled) has no positions: no need to ask the database.
+  if (run.status === 'scheduled' || run.status === 'cancelled') {
+    return computeLive({ run, route: route.geo, pings: [], stop, avgSpeedKmh: null });
+  }
+  // One round trip: the last 6 positions, and (window function, computed before the limit)
+  // the average speed of all positions since departure.
+  const { rows } = await ctx.pool.query(
+    `select "timestamp", lat, lon, speed_kmh, avg(speed_kmh) over ()::float as avg_all from gps_pings
+      where trip_run_id = $1 order by "timestamp" desc limit 6`, [run.id]);
+  return computeLive({ run, route: route.geo, pings: rows.reverse(), stop, avgSpeedKmh: rows[0]?.avg_all ?? null });
+}
+
+/** The live state of several trips at once (their database questions run side by side). */
+export function loadLiveMany(ctx, runs) {
+  return Promise.all(runs.map((run) => loadLive(ctx, run)));
 }
 
 /** The trip run as the apps see it. Riders only see a driver's phone number if the admin allows it. */
