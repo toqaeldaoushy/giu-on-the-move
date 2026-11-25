@@ -1,0 +1,106 @@
+GIU on the Move — technical evaluation
+Run at 2026-11-25T15:10:57.783Z on a local test database (PostgreSQL), server and clients on the same machine (Node v22.23.5).
+Simulated clock: 2026-10-08T13:40:00 | planned trip time: 71 min | GPS error added: up to 8 m
+
+## Replay A: normal pace, 5 riders
+Run 28 (route 1, outbound, 45.00 km); 5 rider client(s); one position every 1000 ms of wall time (= 30 s of trip time)
+Positions sent: 142; accepted by the server: 142; refused: 0; stored in the database: 142
+Delivered to each rider client: min 142, max 142 of 142 -> every position delivered: YES
+Longest gap between two consecutive delivered positions (trip time): 30 s (criterion: no gap above 60 s)
+Latency, driver send -> rider receive, over 710 deliveries: median 4.55 ms, 95th percentile 7.36 ms, max 23.83 ms (criterion: median under 2 s)
+Displayed position vs noise-free position: median 4.0 m, 95th percentile 7.4 m, max 7.9 m (GPS error added: up to 8 m)
+Distance travelled along the route (projection) vs truth: median 11.2 m, max 246.4 m
+Updates carrying an arrival estimate: 710 of 710; trip ended with HTTP 200
+
+## Replay B: normal pace, 50 riders
+Run 29 (route 1, outbound, 45.00 km); 50 rider client(s); one position every 1000 ms of wall time (= 30 s of trip time)
+Positions sent: 142; accepted by the server: 142; refused: 0; stored in the database: 142
+Delivered to each rider client: min 142, max 142 of 142 -> every position delivered: YES
+Longest gap between two consecutive delivered positions (trip time): 30 s (criterion: no gap above 60 s)
+Latency, driver send -> rider receive, over 7100 deliveries: median 5.35 ms, 95th percentile 8.87 ms, max 13.90 ms (criterion: median under 2 s)
+Displayed position vs noise-free position: median 4.2 m, 95th percentile 7.6 m, max 7.9 m (GPS error added: up to 8 m)
+Distance travelled along the route (projection) vs truth: median 11.2 m, max 26.5 m
+Updates carrying an arrival estimate: 7100 of 7100; trip ended with HTTP 200
+
+## Replay C: stress, 10 positions per second, 5 riders
+Run 30 (route 1, outbound, 45.00 km); 5 rider client(s); one position every 100 ms of wall time (= 30 s of trip time)
+Positions sent: 142; accepted by the server: 142; refused: 0; stored in the database: 142
+Delivered to each rider client: min 142, max 142 of 142 -> every position delivered: YES
+Longest gap between two consecutive delivered positions (trip time): 30 s (criterion: no gap above 60 s)
+Latency, driver send -> rider receive, over 710 deliveries: median 4.06 ms, 95th percentile 5.09 ms, max 7.36 ms (criterion: median under 2 s)
+Displayed position vs noise-free position: median 4.4 m, 95th percentile 7.7 m, max 8.0 m (GPS error added: up to 8 m)
+Distance travelled along the route (projection) vs truth: median 11.2 m, max 28.1 m
+Updates carrying an arrival estimate: 710 of 710; trip ended with HTTP 200
+
+## Role-by-endpoint access matrix
+Each endpoint called with no token, a forged token (wrong secret), an expired token, and a valid rider, driver and administrator token.
+Expected: 401 without a valid token; 403 for a role the endpoint is not meant for; anything else (200, 201, 400, 404, 409) for the intended role.
+Calls by the intended role use an id that does not exist (999999) or an invalid body, so they pass the access check without changing data.
+A "!" marks a response that differs from the expectation.
+
+GET    /me                                (any   ) none:401  forged:401  expired:401  rider:200  driver:200  admin:200
+GET    /route                             (any   ) none:401  forged:401  expired:401  rider:200  driver:200  admin:200
+GET    /timetable?date=2026-10-08         (any   ) none:401  forged:401  expired:401  rider:200  driver:200  admin:200
+GET    /runs/28/live                      (any   ) none:401  forged:401  expired:401  rider:200  driver:200  admin:200
+GET    /runs/28/pings                     (any   ) none:401  forged:401  expired:401  rider:200  driver:200  admin:200
+POST   /alerts                            (rider ) none:401  forged:401  expired:401  rider:404  driver:403  admin:403
+GET    /alerts                            (rider ) none:401  forged:401  expired:401  rider:200  driver:403  admin:403
+DELETE /alerts/999999                     (rider ) none:401  forged:401  expired:401  rider:404  driver:403  admin:403
+POST   /runs/999999/full-report           (rider ) none:401  forged:401  expired:401  rider:404  driver:403  admin:403
+GET    /driver/runs?date=2026-10-08       (driver) none:401  forged:401  expired:401  rider:403  driver:200  admin:403
+POST   /driver/runs/999999/start          (driver) none:401  forged:401  expired:401  rider:403  driver:404  admin:403
+POST   /driver/runs/999999/end            (driver) none:401  forged:401  expired:401  rider:403  driver:404  admin:403
+POST   /driver/runs/999999/pings          (driver) none:401  forged:401  expired:401  rider:403  driver:404  admin:403
+POST   /driver/runs/999999/problems       (driver) none:401  forged:401  expired:401  rider:403  driver:404  admin:403
+GET    /admin/overview?date=2026-10-08    (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:200
+GET    /admin/buses                       (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:200
+POST   /admin/buses                       (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:400
+PATCH  /admin/buses/999999                (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:404
+GET    /admin/drivers                     (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:200
+POST   /admin/drivers                     (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:400
+PATCH  /admin/drivers/999999              (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:404
+PATCH  /admin/runs/999999/assignment      (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:404
+POST   /admin/runs/999999/cancel          (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:404
+POST   /admin/runs/generate               (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:400
+GET    /admin/reports?date=2026-10-08     (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:200
+GET    /admin/assignment-changes          (admin ) none:401  forged:401  expired:401  rider:403  driver:403  admin:200
+
+Live connection without a token: refused
+Live connection with a forged token: refused
+Rider sends a position: refused (403)
+Administrator sends a position: refused (403)
+Driver starts a trip assigned to another driver: HTTP 403
+
+Checks: 161; as expected: 161; not as expected: 0; unauthorized accesses: 0
+
+## Second route (NFR6)
+
+## Replay D: second route, normal pace, 5 riders
+Run 31 (route 2, outbound, 44.99 km); 5 rider client(s); one position every 1000 ms of wall time (= 30 s of trip time)
+Positions sent: 142; accepted by the server: 142; refused: 0; stored in the database: 142
+Delivered to each rider client: min 142, max 142 of 142 -> every position delivered: YES
+Longest gap between two consecutive delivered positions (trip time): 30 s (criterion: no gap above 60 s)
+Latency, driver send -> rider receive, over 710 deliveries: median 4.20 ms, 95th percentile 6.07 ms, max 8.68 ms (criterion: median under 2 s)
+Displayed position vs noise-free position: median 3.7 m, 95th percentile 7.4 m, max 7.7 m (GPS error added: up to 8 m)
+Distance travelled along the route (projection) vs truth: median 11.2 m, max 162.7 m
+Updates carrying an arrival estimate: 710 of 710; trip ended with HTTP 200
+Timetable for 2026-10-08 lists 6 runs, including the route-2 run: YES
+Live state of the route-2 run after the trip: status completed, progress 1
+GET /api/route returns route 1 only ("First Settlement line (Gate 2, El Nakhl to GIU)"): the endpoint and the app assume one route
+
+## Storage of positions
+gps_pings: 4342 rows, 876544 bytes with indexes (409600 bytes table only) -> 202 bytes per position with indexes
+
+## Summary
+Replay A: PASS
+Replay B: PASS
+Replay C: PASS
+Replay D: PASS
+Access matrix: PASS (161/161 checks as expected over 26 endpoints and 5 live-connection checks; unauthorized accesses: 0)
+
+## Fleet load and storage estimate (from 202 bytes per position, 142 positions per 71-minute trip, 5 trips per day, 312 operating days per year)
+per trip KB 28.01171875 per day KB 140.05859375 per year MB 42.674102783203125 routes in 500MB 11.716707965487773
+10 buses -> pings/s 0.3333333333333333
+25 buses -> pings/s 0.8333333333333334
+50 buses -> pings/s 1.6666666666666667
+100 buses -> pings/s 3.3333333333333335
