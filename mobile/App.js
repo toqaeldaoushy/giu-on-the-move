@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator, StatusBar, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from './src/api';
@@ -116,7 +115,7 @@ function Main() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.background }}>
-      <StatusBar style={t.statusBar} />
+      <StatusBar barStyle={t.mode === 'night' ? 'light-content' : 'dark-content'} backgroundColor={t.surface} />
       {screen}
     </SafeAreaView>
   );

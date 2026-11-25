@@ -1,6 +1,6 @@
 // The shared parts every screen is built from (brand guide, section 5).
 import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from 'react-native';
-import { BusFront, ChevronLeft, CircleUser } from 'lucide-react-native';
+import { ChevronLeft, CircleUser } from 'lucide-react-native';
 import { radius, space, statusColors, type, useStyles, useTheme } from '../theme';
 
 /** Text in one of the type styles: <T v="title2">Afternoon departure</T> */
@@ -112,9 +112,7 @@ export function Header({ title = 'GIU on the Move', subtitle, onBack, onProfile,
           <ChevronLeft size={28} color={t.text} />
         </Pressable>
       ) : (
-        <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center', marginRight: space.m }}>
-          <BusFront size={22} color={t.onPrimary} />
-        </View>
+        <Logo width={100} style={{ marginRight: space.m, marginLeft: -4 }} />
       )}
       <View style={{ flex: 1 }}>
         <T v="title2" numberOfLines={1}>{title}</T>
@@ -165,10 +163,10 @@ export function ErrorText({ message }) {
 }
 
 /** The full logo (light or night version) */
-export function Logo({ width = 220 }) {
+export function Logo({ width = 220, style }) {
   const { t } = useTheme();
   const src = t.mode === 'night' ? require('../../assets/logo-night.png') : require('../../assets/logo.png');
-  return <Image source={src} style={{ width, height: width / 2.8, resizeMode: 'contain', alignSelf: 'center' }} accessibilityLabel="GIU on the Move" />;
+  return <Image source={src} style={[{ width, height: width / 2.8, resizeMode: 'contain', alignSelf: 'center' }, style]} accessibilityLabel="GIU on the Move" />;
 }
 
 /** A labelled text field */
