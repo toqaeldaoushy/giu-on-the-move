@@ -10,16 +10,17 @@ const STATUS_LABELS = {
 
 const round = (v, d) => Math.round(v * 10 ** d) / 10 ** d;
 const MIN_SPEED_KMH = 5;          // a stopped bus still gets a finite ETA
-const TRUST_FULLY_AFTER = 0.10;   // share of the route after which the measured speed is fully trusted
-                                  // (chosen on tuning trips in the scenario experiment, scripts/eta-scenarios.js)
+const TRUST_FULLY_AFTER = 0.10;   // share of the route after which the measured speed gets its full weight
+const MAX_TRUST = 0.75;           // the measured speed never counts for more than 75%; the plan keeps 25%
+                                  // (both chosen on tuning trips in the scenario experiment, scripts/eta-scenarios.js)
 
 /**
  * The ETA: the distance still to travel along the route, divided by an expected speed.
  * The expected speed mixes the PLANNED speed (route length / planned trip time) with the bus's MEASURED
  * speed, which is the average speed of ALL its pings since the trip started. Right after departure the
- * planned speed counts most; the measured speed takes over as the trip progresses (fully after 10% of
- * the route). Averaging over the whole trip, rather than the last few pings, keeps one stop at a traffic
- * light or a short jam from swinging the ETA. Both settings were chosen on the tuning trips of the
+ * planned speed counts most; the measured speed takes over as the trip progresses (its full weight after 10% of
+ * the route, and then at most 75%, so the plan always keeps a quarter of the weight). Averaging over the whole trip, rather than the last few pings, keeps one stop at a traffic
+ * light or a short jam from swinging the ETA. All three settings were chosen on the tuning trips of the
  * scenario experiment (scripts/eta-scenarios.js) and checked on held-out trips.
  * The first version used the last 6 pings and full trust after 25% of the route.
  * The status label compares the expected arrival with the scheduled arrival
@@ -57,7 +58,7 @@ export function computeLive({ run, route, pings, stop = null, avgSpeedKmh = null
   const measured = avgSpeedKmh ?? pings.reduce((a, p) => a + p.speed_kmh, 0) / pings.length;
   const recentSpeed = Math.max(MIN_SPEED_KMH, measured);
   const plannedSpeed = route.totalKm / (config.plannedTripMin / 60);
-  const trust = Math.min(1, progressKm / (route.totalKm * TRUST_FULLY_AFTER));
+  const trust = Math.min(MAX_TRUST, progressKm / (route.totalKm * TRUST_FULLY_AFTER));
   const avgSpeed = (1 - trust) * plannedSpeed + trust * recentSpeed;
   const etaMin = (live.remainingKm / avgSpeed) * 60;
   live.etaMinutes = Math.round(etaMin);

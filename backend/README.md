@@ -32,7 +32,7 @@ The server between the apps and the database: apps → **this server** → Supab
 
 **Terminal 2: a rider's phone.** It prints everything a rider's app would receive for trip 28 (Thursday 13:45):
 ```
-npm run watch:rider -- --run 28 --stop 6
+npm run watch:rider -- --run 28 --stop 9
 ```
 **Terminal 3: the driver's phone.** It logs in as Ahmed Hassan, starts the trip and plays a whole trip of positions (30 times faster than real time, so it takes about 2.5 minutes):
 ```
@@ -66,24 +66,23 @@ All calls except `health`, `time` and `auth/login` need the header `Authorizatio
 
 ## How the ETA works, and how good it is
 
-The ETA is the distance still to travel along the route divided by an expected speed. Early in the trip the expected speed is mostly the planned speed (route length divided by the planned trip time, 40 minutes); as the trip progresses the bus's own recent speed takes over (fully after 25% of the route). The status label says **Delayed** when the expected arrival is more than 5 minutes later than the scheduled arrival.
+The ETA is the distance still to travel along the route divided by an expected speed. The expected speed mixes the planned speed (route length divided by the planned trip time, 71 minutes, the duration of the recorded real trip) with the bus's measured speed, which is the average speed of all positions since the trip started. The measured speed takes over gradually: after 10% of the route it counts for 75%, and the plan keeps 25%. The status label says **Delayed** when the expected arrival is more than 5 minutes later than the scheduled arrival.
 
-Measured on the 26 finished simulated trips (`npm run eval:eta`):
+These settings were chosen on simulated trips only (`node scripts/eta-scenarios.js`). The script generates 150 trips on the real route in five traffic scenarios (light, normal, rush hour, incident, mixed), tunes the method on 50 of them and evaluates it on the other 100. Mean absolute error on the 100 held-out trips (simulated data only):
 
-| Progress of the trip | Mean absolute error |
-| --- | --- |
-| 0 to 25% | 3.8 min |
-| 25 to 50% | 11.9 min |
-| 50 to 75% | 5.2 min |
-| 75 to 95% | 4.7 min |
-| **Whole trip** | **6.5 min** (the first version, which used only the recent speed, had 20.4 min) |
+| Scenario | Light | Normal | Rush hour | Incident | Mixed | Overall |
+| --- | --- | --- | --- | --- | --- | --- |
+| ETA in the app | 6.4 min | 6.0 min | 8.8 min | 9.1 min | 9.9 min | 8.4 min |
+| First version | 8.7 min | 11.1 min | 22.5 min | 56.5 min | 34.9 min | 28.1 min |
 
-Known limits: the ETA is a bit too early near the end because buses slow down when they approach the campus; mid-trip traffic jams in the simulated data are not predictable; and this is simulated data, not real buses.
+The full results, including the timetable and schedule baselines, are in `data/scenarios/scenario_summary.txt`.
+
+On the one real recorded trip (`node scripts/eta-real-trip.js`, results in `data/real/real_trip_eta.txt`) the ETA in the app was off by 10.3 min on average: about 24 min too late in the first quarter of the route, where the few slow positions recorded so far pull the average speed down, and 1.8 min in the last part. One trip is a check on real roads, not a measure of accuracy.
 
 ## Tests
 
-`tests/api.test.js` has 24 end-to-end tests: logins and role rules, the timetable and phone-number privacy, a whole live trip from the driver's phone to the rider's screen (with a falling ETA and a "Delayed" label), reports, assignments and their rules, buses, drivers, days and alerts. They need a database loaded with the project data, so `tests/run_with_local_postgres.py` sets up a throw-away local Postgres (`pip install pgserver psycopg2-binary`, then `python3 tests/run_with_local_postgres.py`). Do not point the tests at your Supabase project: they change data.
+`tests/api.test.js` has 25 end-to-end tests: logins and role rules, the timetable and phone-number privacy, the driver's own trip list, a whole live trip from the driver's phone to the rider's screen (with a falling ETA and a "Delayed" label), reports, assignments and their rules, buses, drivers, days and alerts. They need a database loaded with the project data, so `tests/run_with_local_postgres.py` sets up a throw-away local Postgres (`pip install pgserver psycopg2-binary`, then `python3 tests/run_with_local_postgres.py`). Do not point the tests at your Supabase project: they change data.
 
 ## Not built yet
 
-The apps themselves (rider, driver, admin), push notifications (alerts are saved but nothing sends them yet), editing the timetable itself and the route, and Supabase Auth (logins are handled by this server for now, kept in their own `credentials` table).
+Push notifications (alerts are saved but nothing sends them yet), editing the timetable itself and the route, and Supabase Auth (logins are handled by this server for now, kept in their own `credentials` table).

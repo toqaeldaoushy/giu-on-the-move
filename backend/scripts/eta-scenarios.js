@@ -8,7 +8,8 @@
 //   Cairo rush hour 2025: 23.2 km/h average, 26.2 morning, 21.1 evening (TomTom Traffic Index).
 //   Bus dwell time at stops: about 21-29 s on average (Washington DC study, 2015; not Egyptian data).
 //   Bus acceleration about 1.1 m/s2 and braking about 1.3 m/s2 (Keller and Krasna, 2023).
-// Everything else (incident length, rush-hour dwell, jam zones, signal stops) is an assumption of this study.
+// Dwell at stops is 20-30 s in every scenario: the bus stops briefly, only when someone gets on or off.
+// Everything else (incident length, jam zones, signal stops) is an assumption of this study.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,14 +18,14 @@ import { buildRoute, haversineKm } from '../src/geo.js';
 // ---------- arguments ----------
 const arg = (name, dflt) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : dflt; };
 const ROUTE_CSV = arg('--route', '../data/route_points.csv');
-const STOPS_CSV = arg('--stops', '../data/stops.csv');
+const STOPS_CSV = arg('--stops', '../data/real/stops_recorded.csv');   // only stops where the bus is known to stop (the placed stops are for the app)
 const OUT_DIR = arg('--out', '../data/scenarios');
 const SEED = Number(arg('--seed', 20261120));
 const TRIPS_PER_SCENARIO = Number(arg('--trips', 30));
 const TUNING_PER_SCENARIO = Number(arg('--tuning', 10));
 
 // ---------- fixed settings (same as the system) ----------
-const PLANNED_TRIP_MIN = 40;   // config.plannedTripMin
+const PLANNED_TRIP_MIN = 71;   // config.plannedTripMin: the recorded real trip
 const PING_EVERY_S = 30;       // one position every 30 s (NFR5)
 const GPS_ERROR_M = 8;         // random offset of up to 8 m per position, as in the existing dataset
 const ACCEL = 1.1;             // m/s2
@@ -57,10 +58,10 @@ function pointAt(sKm) { // lat/lon at a distance along the inbound path
 // local / main: target speed range in km/h; dwell: seconds at each stop; signalsPerKm: extra short stops on local streets
 const SCENARIOS = {
   light:    { label: 'Light traffic', local: [40, 50], main: [80, 90], dwell: [20, 30], signalsPerKm: 0.3, signalStop: [10, 30] },
-  normal:   { label: 'Normal day',    local: [30, 40], main: [60, 80], dwell: [20, 40], signalsPerKm: 0.5, signalStop: [20, 60] },
-  rush:     { label: 'Rush hour',     local: [10, 25], main: [20, 40], dwell: [40, 90], signalsPerKm: 0.8, signalStop: [30, 90] },
-  incident: { label: 'Incident',      local: [30, 40], main: [60, 80], dwell: [20, 40], signalsPerKm: 0.5, signalStop: [20, 60], incident: [10, 15] },
-  mixed:    { label: 'Mixed',         local: [25, 45], main: [50, 85], dwell: [20, 90], signalsPerKm: 0.5, signalStop: [20, 60], jams: [1, 3], jamKm: [1, 3], jamSpeed: [5, 20] },
+  normal:   { label: 'Normal day',    local: [30, 40], main: [60, 80], dwell: [20, 30], signalsPerKm: 0.5, signalStop: [20, 60] },
+  rush:     { label: 'Rush hour',     local: [10, 25], main: [20, 40], dwell: [20, 30], signalsPerKm: 0.8, signalStop: [30, 90] },
+  incident: { label: 'Incident',      local: [30, 40], main: [60, 80], dwell: [20, 30], signalsPerKm: 0.5, signalStop: [20, 60], incident: [10, 15] },
+  mixed:    { label: 'Mixed',         local: [25, 45], main: [50, 85], dwell: [20, 30], signalsPerKm: 0.5, signalStop: [20, 60], jams: [1, 3], jamKm: [1, 3], jamSpeed: [5, 20] },
 };
 
 // ---------- simulate one trip, 1-second steps ----------

@@ -7,6 +7,7 @@ import { createPool } from '../src/db.js';
 import { createServer } from '../src/server.js';
 import { seedCredentials } from '../scripts/seed-credentials.js';
 import { formatLocal, parseLocal } from '../src/time.js';
+import { haversineKm } from '../src/geo.js';
 
 const RUN = 28;          // Thursday 13:45, Bus #04, Ahmed Hassan (driver1), still scheduled in the data
 const pool = createPool();
@@ -129,11 +130,17 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
   let driverSock; let riderSock; let adminSock;
   const start = parseLocal('2026-10-08T13:46:00');
 
-  // a point on the route, "fraction" of the way from the campus towards the pickup point (the 13:45 trip is outbound)
+  // a point ON the route path, "fraction" of the way from the campus towards the pickup point (the 13:45 trip
+  // is outbound). The real route bends and turns, so the point is found by distance along the path.
   const pointAt = (fraction) => {
-    const campus = route.points[route.points.length - 1];
-    const pickup = route.points[0];
-    return { lat: campus.lat + (pickup.lat - campus.lat) * fraction, lon: campus.lon + (pickup.lon - campus.lon) * fraction };
+    const pts = [...route.points].reverse();               // campus first
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + haversineKm(pts[i - 1], pts[i]));
+    const target = fraction * cum[cum.length - 1];
+    let i = 1;
+    while (i < pts.length - 1 && cum[i] < target) i++;
+    const t = (target - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1e-9);
+    return { lat: pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * t, lon: pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * t };
   };
   const ping = (fraction, speed, secondsAfterStart) =>
     ({ runId: RUN, ...pointAt(fraction), speedKmh: speed, timestamp: formatLocal(start + secondsAfterStart * 1000) });
@@ -176,8 +183,11 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
       etas.push(m.etaMinutes);
     }
     assert.deepEqual(etas, [...etas].sort((a, b) => b - a), `ETA should fall: ${etas}`);
-    assert.ok(etas[0] >= 30 && etas[0] <= 36, `first ETA about 33 min (planned and measured speed mixed), got ${etas[0]}`);
-    assert.ok(etas[2] >= 14 && etas[2] <= 16, `half way: about 15 min, got ${etas[2]}`);
+    // 45 km route, 71 min planned (38 km/h). At 5%: half planned, half measured speed (80 km/h) -> about 43 min.
+    assert.ok(etas[0] >= 40 && etas[0] <= 47, `first ETA about 43 min (planned and measured speed mixed), got ${etas[0]}`);
+    // Half way: the measured 80 km/h gets its full weight of 75% (the plan keeps 25%):
+    // 0.25 x 38 + 0.75 x 80 = 69.5 km/h -> 22.5 km in about 19 min.
+    assert.ok(etas[2] >= 17 && etas[2] <= 21, `half way: about 19 min, got ${etas[2]}`);
     assert.ok(etas[4] <= 1, `almost there: ${etas[4]}`);
   });
 
@@ -198,13 +208,13 @@ describe('a live trip, from the driver\'s phone to the rider\'s screen', () => {
     assert.equal(r.body.ok, true);
   });
 
-  it('says "Delayed" when the bus crawls for five minutes', async () => {
+  it('says "Delayed" when the bus crawls for twenty minutes', async () => {
     // The ETA uses the average speed since departure, so a short stop does not flip the label;
-    // five minutes at 8 km/h pulls the average down far enough to make the bus late.
+    // twenty minutes at 5 km/h pulls the average down far enough to make the bus late on the 71-minute plan.
     let last;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 40; i++) {
       const event = once(riderSock, 'bus:position');
-      await emitAck(driverSock, 'driver:ping', ping(0.4, 8, 300 + i * 30));
+      await emitAck(driverSock, 'driver:ping', ping(0.4, 5, 300 + i * 30));
       last = await event;
     }
     assert.equal(last.statusLabel, 'Delayed');
@@ -323,13 +333,13 @@ describe('admin: assignments, buses, drivers and days', () => {
 describe('rider alerts', () => {
   it('creates, updates, lists and deletes an alert, and validates the input', async () => {
     const rider = await login('student01');   // already has an alert on trip 28 in the data, none on trip 29
-    const a = await call('POST', '/alerts', { token: rider, body: { runId: 29, stopId: 6, minutesBefore: 5 } });
+    const a = await call('POST', '/alerts', { token: rider, body: { runId: 29, stopId: 13, minutesBefore: 5 } });
     assert.equal(a.status, 201);
-    const again = await call('POST', '/alerts', { token: rider, body: { runId: 29, stopId: 6, minutesBefore: 10 } });
+    const again = await call('POST', '/alerts', { token: rider, body: { runId: 29, stopId: 13, minutesBefore: 10 } });
     assert.equal(again.body.updated, true);
-    assert.equal((await call('POST', '/alerts', { token: rider, body: { runId: 29, stopId: 6, minutesBefore: 3 } })).status, 400);
+    assert.equal((await call('POST', '/alerts', { token: rider, body: { runId: 29, stopId: 13, minutesBefore: 3 } })).status, 400);
     assert.equal((await call('POST', '/alerts', { token: rider, body: { runId: 29, stopId: 999, minutesBefore: 5 } })).status, 400);
-    assert.equal((await call('POST', '/alerts', { token: rider, body: { runId: 26, stopId: 6, minutesBefore: 5 } })).status, 409);
+    assert.equal((await call('POST', '/alerts', { token: rider, body: { runId: 26, stopId: 13, minutesBefore: 5 } })).status, 409);
     const list = (await call('GET', '/alerts', { token: rider })).body.alerts;
     assert.equal(list.length, 2);                                   // the one from the data and the new one
     assert.equal(list.find((x) => x.id === a.body.id).minutesBefore, 10);

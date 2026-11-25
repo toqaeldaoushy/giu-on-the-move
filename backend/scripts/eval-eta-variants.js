@@ -5,7 +5,7 @@ const rd=(n)=>{const [h,...ls]=fs.readFileSync('../data/'+n,'utf8').trim().split
 const route=buildRoute(rd('route_points.csv').sort((a,b)=>a.seq-b.seq).map(p=>({lat:+p.lat,lon:+p.lon})));
 const trips=Object.fromEntries(rd('trips.csv').map(t=>[t.id,t]));
 const pings=rd('gps_pings.csv'); const runs=rd('trip_runs.csv').filter(r=>r.status==='completed');
-const L=route.totalKm, planned=L/(40/60);
+const L=route.totalKm, planned=L/(71/60);
 // run 9 speeds
 const r9=pings.filter(p=>p.trip_run_id==='9').map(p=>+p.speed_kmh);
 console.log('run 9 pings',r9.length,'speeds:',r9.join(' '));

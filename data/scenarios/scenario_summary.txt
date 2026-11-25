@@ -1,27 +1,27 @@
-SIMULATED DATA ONLY · seed 20261120 · route 39.9 km · 150 trips (50 tuning, 100 held-out)
+SIMULATED DATA ONLY · seed 20261120 · route 45.0 km · 150 trips (50 tuning, 100 held-out)
 
 Generated trips (scheduled departure to arrival, minutes):
-  Light traffic  mean 42.9 (min 40.3, max 45.2) · mean moving speed 61.4 km/h · 2569 pings
-  Normal day     mean 55.5 (min 50.6, max 61.6) · mean moving speed 49.5 km/h · 3316 pings
-  Rush hour      mean 126.0 (min 113.5, max 134.4) · mean moving speed 21.9 km/h · 7446 pings
-  Incident       mean 68.9 (min 63.9, max 73.0) · mean moving speed 49.2 km/h · 4119 pings
-  Mixed          mean 74.8 (min 60.6, max 93.1) · mean moving speed 36.2 km/h · 4484 pings
+  Light traffic  mean 40.6 (min 39.0, max 42.7) · mean moving speed 71.2 km/h · 2421 pings
+  Normal day     mean 51.4 (min 48.3, max 57.6) · mean moving speed 57.4 km/h · 3085 pings
+  Rush hour      mean 117.9 (min 107.1, max 124.6) · mean moving speed 24.9 km/h · 6963 pings
+  Incident       mean 64.2 (min 60.2, max 70.7) · mean moving speed 57.1 km/h · 3841 pings
+  Mixed          mean 69.4 (min 53.0, max 94.8) · mean moving speed 41.4 km/h · 4147 pings
 
-Tuning (tuning trips only): best blended settings = cap 1, window 1000 pings, full trust after 10% of route (MAE 8.3 min)
+Tuning (tuning trips only): best blended settings = cap 0.75, window 1000 pings, full trust after 10% of route (MAE 7.7 min)
 
 Held-out evaluation, MAE in minutes (bias in brackets; + = predicted too late):
   Method                            Light traffic  Normal day     Rush hour      Incident       Mixed          Overall        Stops ahead
-  Timetable                         3.3 (-3.3)     15.7 (-15.7)   86.1 (-86.1)   29.0 (-29.0)   37.6 (-37.6)   45.2 (-45.2)   28.2
-  Schedule                          1.1 (-0.9)     7.5 (-7.5)     44.5 (-44.5)   14.6 (-14.6)   18.8 (-18.8)   23.0 (-23.0)   13.6
-  Recent speed                      9.6 (5.2)      15.6 (9.0)     34.7 (18.0)    47.7 (36.3)    41.2 (29.8)    32.8 (21.1)    18.1
-  Blended (first version)           6.3 (2.2)      11.3 (2.6)     31.3 (-4.7)    41.3 (26.4)    34.2 (18.4)    28.0 (7.9)     14.3
-  Blended (tuned, now in the app)   2.0 (1.3)      2.7 (0.8)      10.2 (-5.9)    11.2 (-1.5)    11.4 (-1.7)    8.6 (-2.4)     6.2
+  Timetable                         30.5 (30.5)    19.4 (19.4)    47.2 (-47.2)   7.3 (7.3)      8.9 (-1.7)     25.7 (-8.6)    14.2
+  Schedule                          17.1 (17.1)    11.1 (11.1)    23.4 (-23.4)   6.1 (5.4)      7.4 (-0.2)     14.3 (-3.3)    7.6
+  Recent speed                      9.6 (5.7)      15.1 (8.9)     26.2 (13.5)    61.5 (51.0)    45.5 (33.2)    33.2 (23.0)    15.9
+  Blended (first version)           8.7 (5.8)      11.1 (6.2)     22.5 (0.1)     56.5 (47.5)    34.9 (23.7)    28.1 (15.4)    11.4
+  Blended (tuned, now in the app)   6.4 (6.2)      6.0 (5.3)      8.8 (-8.3)     9.1 (3.0)      9.9 (-0.2)     8.4 (-0.8)     5.4
 
 Held-out MAE by trip progress (0-25 / 25-50 / 50-75 / 75-95%):
-  Timetable                         45.4 / 44.9 / 44.9 / 45.7
-  Schedule                          38.1 / 26.8 / 16.3 / 7.0
-  Recent speed                      47.4 / 41.1 / 27.2 / 10.4
-  Blended (first version)           29.7 / 41.1 / 27.2 / 10.4
-  Blended (tuned, now in the app)   17.2 / 7.9 / 5.0 / 2.7
+  Timetable                         26.4 / 24.8 / 25.6 / 26.1
+  Schedule                          22.8 / 16.2 / 10.8 / 4.7
+  Recent speed                      45.2 / 45.2 / 26.6 / 7.3
+  Blended (first version)           24.2 / 45.2 / 26.6 / 7.3
+  Blended (tuned, now in the app)   14.3 / 9.6 / 5.7 / 2.5
 
-Evaluation points per method: 13673; stop predictions per method: 28323
+Evaluation points per method: 12716; stop predictions per method: 13837

@@ -12,7 +12,7 @@ console.log('route km',route.totalKm.toFixed(2));
 const st={};allruns.forEach(r=>st[r.status]=(st[r.status]||0)+1);console.log('run status',st);
 console.log('runs with pings', new Set(pings.map(p=>p.trip_run_id)).size);
 const runs=allruns.filter(r=>r.status==='completed');
-const planned=route.totalKm/(40/60);
+const planned=route.totalKm/(71/60);
 console.log('planned speed kmh',planned.toFixed(1));
 const buckets=[[0,.25],[.25,.5],[.5,.75],[.75,.95]];
 const mk=()=>buckets.map(()=>[]);
