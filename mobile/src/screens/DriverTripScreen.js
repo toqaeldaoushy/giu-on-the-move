@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useKeepAwake } from 'expo-keep-awake';
 import { api } from '../api';
-import { colors, directionText } from '../theme';
-import { Button, Card, ErrorText, StatusBadge } from '../components/ui';
+import { directionText, font, radius, space, useStyles, useTheme } from '../theme';
+import { BusFront, CircleStop, Pause, Play, TriangleAlert } from 'lucide-react-native';
+import { Button, Card, ErrorText, Header, StatusBadge, T } from '../components/ui';
 import BusMap from '../components/BusMap';
 import { askLocationPermission, useLocationSharing } from '../useLocationSharing';
 
@@ -19,12 +20,16 @@ const clock = (d) => (d ? d.toTimeString().slice(0, 8) : '—');
 
 /** Keeps the phone screen on while it is mounted (only used during a trip). */
 function KeepAwake() {
+  const { t } = useTheme();
+  const styles = useStyles(makeStyles);
   useKeepAwake();
   return null;
 }
 
 /** One trip for the driver: start it, share the bus position, report a problem, end it. */
 export default function DriverTripScreen({ session, route, run: initialRun, onBack }) {
+  const { t } = useTheme();
+  const styles = useStyles(makeStyles);
   const { token } = session;
   const [run, setRun] = useState(initialRun);
   const [paused, setPaused] = useState(false);
@@ -117,21 +122,21 @@ export default function DriverTripScreen({ session, route, run: initialRun, onBa
   const canReport = run.status === 'scheduled' || run.status === 'in_progress';
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <View style={styles.screen}>
+    <Header
+      title={run.label}
+      subtitle={`${run.scheduledTime} · ${directionText[run.direction]} · Trip ${run.tripCode}`}
+      onBack={onBack}
+      right={<StatusBadge label={run.live?.statusLabel ?? badgeLabel[run.status]} />}
+    />
+    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       {onRoad && !paused && <KeepAwake />}
 
-      <Pressable onPress={onBack} hitSlop={10}>
-        <Text style={styles.back}>‹ My trips</Text>
-      </Pressable>
-
-      <Card style={{ marginTop: 12 }}>
+      <Card>
         <View style={styles.row}>
-          <Text style={styles.time}>{run.scheduledTime}</Text>
-          <StatusBadge label={run.live?.statusLabel ?? badgeLabel[run.status]} />
+          <BusFront size={20} color={t.goldText} />
+          <T v="strong" style={{ marginLeft: 8, flex: 1 }}>{run.bus ? `Bus ${run.bus.number} · ${run.bus.plate}` : 'No bus assigned yet. Contact the transportation office.'}</T>
         </View>
-        <Text style={styles.title}>{run.label}</Text>
-        <Text style={styles.muted}>{directionText[run.direction]} · Trip {run.tripCode}</Text>
-        <Text style={styles.muted}>{run.bus ? `Bus ${run.bus.number} · ${run.bus.plate}` : 'No bus assigned yet. Contact the transportation office.'}</Text>
       </Card>
 
       {route ? (
@@ -145,14 +150,14 @@ export default function DriverTripScreen({ session, route, run: initialRun, onBa
 
       {run.status === 'scheduled' && (
         <View style={styles.block}>
-          <Button title="Start trip" onPress={startTrip} busy={busy === 'start'} disabled={!run.bus} />
+          <Button title="Start trip" icon={Play} onPress={startTrip} busy={busy === 'start'} disabled={!run.bus} />
           <Text style={styles.hint}>Press when the bus leaves. Riders will start to see it on the map.</Text>
         </View>
       )}
 
       {onRoad && (
         <Card style={[styles.block, paused ? styles.pausedCard : styles.liveCard]}>
-          <Text style={[styles.shareTitle, { color: paused ? colors.warning : colors.good }]}>
+          <Text style={[styles.shareTitle, { color: paused ? t.goldText : t.green }]}>
             {paused ? 'Location sharing is paused' : 'Sharing the bus location'}
           </Text>
           <Text style={styles.muted}>
@@ -164,14 +169,14 @@ export default function DriverTripScreen({ session, route, run: initialRun, onBa
           {stats.lastError ? <Text style={styles.warn}>Last send failed: {stats.lastError}</Text> : null}
           {gpsError ? <Text style={styles.warn}>GPS: {gpsError}</Text> : null}
           <View style={{ marginTop: 12 }}>
-            <Button title={paused ? 'Resume sharing' : 'Pause sharing'} kind="outline" onPress={() => setPaused((p) => !p)} />
+            <Button title={paused ? 'Resume sharing' : 'Pause sharing'} icon={paused ? Play : Pause} kind="secondary" onPress={() => setPaused((p) => !p)} />
           </View>
         </Card>
       )}
 
       {canReport && !problemOpen && (
         <View style={styles.block}>
-          <Button title="Report a problem" kind="outline" onPress={() => { setProblemOpen(true); setError(''); }} />
+          <Button title="Report a problem" icon={TriangleAlert} kind="secondary" onPress={() => { setProblemOpen(true); setError(''); }} />
         </View>
       )}
 
@@ -187,21 +192,21 @@ export default function DriverTripScreen({ session, route, run: initialRun, onBa
                 accessibilityRole="radio"
                 accessibilityState={{ selected: problemType === p.type }}
               >
-                <Text style={[styles.choiceText, problemType === p.type && { color: '#fff' }]}>{p.label}</Text>
+                <Text style={[styles.choiceText, problemType === p.type && { color: t.onPrimary }]}>{p.label}</Text>
               </Pressable>
             ))}
           </View>
           <TextInput
             style={styles.input}
             placeholder="Note (optional), e.g. accident near the ring road"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={t.disabled}
             value={note}
             onChangeText={setNote}
             maxLength={500}
             multiline
           />
           <View style={styles.row2}>
-            <Button small title="Cancel" kind="outline" onPress={() => { setProblemOpen(false); setProblemType(null); setNote(''); }} />
+            <Button small title="Cancel" kind="secondary" onPress={() => { setProblemOpen(false); setProblemType(null); setNote(''); }} />
             <View style={{ width: 10 }} />
             <Button small title="Send" onPress={sendProblem} busy={busy === 'problem'} />
           </View>
@@ -210,7 +215,7 @@ export default function DriverTripScreen({ session, route, run: initialRun, onBa
 
       {onRoad && (
         <View style={styles.block}>
-          <Button title="End trip" kind="danger" onPress={endTrip} busy={busy === 'end'} />
+          <Button title="End trip" icon={CircleStop} kind="danger" onPress={endTrip} busy={busy === 'end'} />
           <Text style={styles.hint}>Press when the bus reaches the last stop.</Text>
         </View>
       )}
@@ -222,30 +227,31 @@ export default function DriverTripScreen({ session, route, run: initialRun, onBa
         <Card style={styles.block}><Text style={styles.muted}>This trip was cancelled by the transportation office.</Text></Card>
       )}
     </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 40 },
-  back: { color: colors.primary, fontWeight: '600', fontSize: 16 },
+const makeStyles = (t) => ({
+  screen: { flex: 1, backgroundColor: t.background },
+  content: { padding: space.xl, paddingBottom: 48 },
+  back: { color: t.primary, fontFamily: font.semibold, fontSize: 16 },
   map: { marginTop: 12 },
   row: { flexDirection: 'row', alignItems: 'center' },
   row2: { flexDirection: 'row', marginTop: 12 },
-  time: { fontSize: 34, fontWeight: '700', color: colors.text, marginRight: 12 },
-  title: { fontSize: 17, fontWeight: '600', color: colors.text, marginTop: 4 },
-  muted: { fontSize: 14, color: colors.muted, marginTop: 2 },
+  time: { fontSize: 34, fontFamily: font.bold, color: t.text, marginRight: 12 },
+  title: { fontSize: 17, fontFamily: font.semibold, color: t.text, marginTop: 4 },
+  muted: { fontFamily: font.medium, fontSize: 14, color: t.muted, marginTop: 2 },
   block: { marginTop: 16 },
-  hint: { fontSize: 13, color: colors.muted, marginTop: 6, textAlign: 'center' },
-  message: { color: colors.good, marginTop: 10, fontSize: 14 },
-  liveCard: { borderColor: colors.good },
-  pausedCard: { borderColor: colors.warning },
-  shareTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 },
-  stats: { fontSize: 13, color: colors.text, marginTop: 8 },
-  warn: { fontSize: 13, color: colors.warning, marginTop: 4 },
+  hint: { fontFamily: font.medium, fontSize: 13, color: t.muted, marginTop: 6, textAlign: 'center' },
+  message: { color: t.green, marginTop: 10, fontFamily: font.medium, fontSize: 14 },
+  liveCard: { borderColor: t.green, borderWidth: 1.5 },
+  pausedCard: { borderColor: t.gold, borderWidth: 1.5 },
+  shareTitle: { fontSize: 16, fontFamily: font.bold, color: t.text, marginBottom: 4 },
+  stats: { fontFamily: font.medium, fontSize: 13, color: t.text, marginTop: 8 },
+  warn: { fontFamily: font.medium, fontSize: 13, color: t.goldText, marginTop: 4 },
   choices: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
-  choice: { borderWidth: 1, borderColor: colors.primary, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 12, marginRight: 8, marginBottom: 8 },
-  choiceOn: { backgroundColor: colors.primary },
-  choiceText: { color: colors.primary, fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 10, minHeight: 60, color: colors.text, marginTop: 4, textAlignVertical: 'top' },
+  choice: { borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 12, marginRight: 8, marginBottom: 8 },
+  choiceOn: { backgroundColor: t.primary },
+  choiceText: { color: t.text, fontFamily: font.semibold },
+  input: { fontFamily: font.medium, fontSize: 15, backgroundColor: t.surface2, borderWidth: 1, borderColor: t.border, borderRadius: radius.input, padding: 10, minHeight: 60, color: t.text, marginTop: 4, textAlignVertical: 'top' },
 });

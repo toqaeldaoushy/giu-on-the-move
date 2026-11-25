@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Bell, ChevronRight, Clock, MapPin, Trash2 } from 'lucide-react-native';
 import { api } from '../api';
-import { colors, directionText } from '../theme';
-import { Card, ErrorText, StatusBadge } from '../components/ui';
+import { directionText, radius, space, useStyles, useTheme } from '../theme';
+import { Card, ErrorText, Header, HeroCard, Pill, SectionLabel, Segmented, StatusBadge, T, TripRow } from '../components/ui';
+import ProfileMenu from '../components/ProfileMenu';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -38,6 +40,10 @@ function tripLine(run) {
 
 export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }) {
   const { token, user } = session;
+  const { t } = useTheme();
+  const s = useStyles(makeStyles);
+  const [menu, setMenu] = useState(false);
+  const [direction, setDirection] = useState('all');
   const [data, setData] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [error, setError] = useState('');
@@ -95,98 +101,102 @@ export default function TimetableScreen({ session, stops, onOpenTrip, onLogout }
   const stopName = (id) => stops.find((s) => s.id === id)?.name ?? `Stop ${id}`;
   const runs = data?.runs ?? [];
   const next = runs.find((r) => r.status === 'scheduled' || r.status === 'in_progress');
+  const shown = runs.filter((r) => direction === 'all' || r.direction === direction);
+  const countdown = next ? countdownText(next, data, fetchedAt) : null;
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
-    >
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.hello}>Hi, {user.name}</Text>
-          <Text style={styles.date}>{data ? `${niceDate(data.date)} · ${timeOf(data.now)}` : 'Loading…'}</Text>
-        </View>
-        <Pressable onPress={onLogout} hitSlop={10}>
-          <Text style={styles.logout}>Log out</Text>
-        </Pressable>
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.background }}>
+      <Header
+        title={`Hi, ${user.name}`}
+        subtitle={data ? `${niceDate(data.date)} · ${timeOf(data.now)}` : 'Loading…'}
+        onProfile={() => setMenu(true)}
+      />
+      <ScrollView
+        contentContainerStyle={s.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={t.gold} />}
+      >
+        <ErrorText message={error} />
 
-      <ErrorText message={error} />
-
-      {next && (
-        <Pressable onPress={() => onOpenTrip(next)}>
-          <Card style={styles.nextCard}>
-            <Text style={styles.nextLabel}>NEXT SHUTTLE</Text>
-            <View style={styles.row}>
-              <Text style={styles.nextTime}>{next.scheduledTime}</Text>
-              <StatusBadge label={next.live?.statusLabel ?? 'Not started'} />
-            </View>
-            {countdownText(next, data, fetchedAt) && <Text style={styles.countdown}>{countdownText(next, data, fetchedAt)}</Text>}
-            <Text style={styles.nextTitle}>{next.label}</Text>
-            <Text style={styles.muted}>{tripLine(next)}</Text>
-            <Text style={styles.link}>Track this bus ›</Text>
-          </Card>
-        </Pressable>
-      )}
-
-      {data && runs.length === 0 && (
-        <Card><Text style={styles.muted}>No shuttles today. The buses run Saturday to Thursday.</Text></Card>
-      )}
-
-      {runs.length > 0 && <Text style={styles.section}>Today's timetable</Text>}
-      {runs.map((run) => (
-        <Pressable key={run.id} onPress={() => onOpenTrip(run)}>
-          <Card style={styles.tripCard}>
-            <View style={styles.row}>
-              <Text style={styles.tripTime}>{run.scheduledTime}</Text>
-              <View style={{ flex: 1, marginLeft: 14 }}>
-                <Text style={styles.tripTitle}>{run.label}</Text>
-                <Text style={styles.muted}>
-                  {directionText[run.direction]}{run.bus ? ` · Bus ${run.bus.number}` : ''}
-                </Text>
-                <Text style={styles.muted}>{tripLine(run)}</Text>
+        {next && (
+          <Pressable onPress={() => onOpenTrip(next)} accessibilityRole="button" accessibilityLabel={`Next shuttle at ${next.scheduledTime}. Track this bus`}>
+            <HeroCard style={{ marginTop: space.s }}>
+              <View style={s.row}>
+                <T v="label" color={t.onHeroMuted} style={{ flex: 1 }}>Next shuttle</T>
+                <StatusBadge label={next.live?.statusLabel ?? 'Not started'} />
               </View>
-              <StatusBadge label={run.live?.statusLabel ?? 'Not started'} />
+              <T v="display" color={t.onHero} style={{ marginTop: space.s }}>{next.scheduledTime}</T>
+              <T v="title2" color={t.onHero}>{next.label}</T>
+              <T v="caption" color={t.onHeroMuted} style={{ marginTop: 2 }}>
+                {directionText[next.direction]}{next.bus ? ` · Bus ${next.bus.number}` : ''} · {tripLine(next)}
+              </T>
+              <View style={[s.row, { marginTop: space.l }]}>
+                <View style={{ flex: 1 }}>{countdown && <Pill text={countdown} tone={t.mode === 'night' ? 'plain' : 'gold'} />}</View>
+                <T v="strong" color={t.onHero}>Track this bus</T>
+                <ChevronRight size={20} color={t.onHero} />
+              </View>
+            </HeroCard>
+          </Pressable>
+        )}
+
+        {data && runs.length === 0 && (
+          <Card style={{ marginTop: space.s }}>
+            <T color={t.muted}>No shuttles today. The buses run Saturday to Thursday.</T>
+          </Card>
+        )}
+
+        {runs.length > 0 && (
+          <>
+            <SectionLabel>Today's timetable</SectionLabel>
+            <Segmented
+              value={direction}
+              onChange={setDirection}
+              options={[{ value: 'all', label: 'All' }, { value: 'inbound', label: 'To campus' }, { value: 'outbound', label: 'From campus' }]}
+            />
+            <View style={{ height: space.m }} />
+          </>
+        )}
+        {shown.map((run) => (
+          <TripRow
+            key={run.id}
+            time={run.scheduledTime}
+            title={run.label}
+            badge={run.live?.statusLabel ?? 'Not started'}
+            onPress={() => onOpenTrip(run)}
+            lines={[
+              { icon: MapPin, text: `${directionText[run.direction]}${run.bus ? ` · Bus ${run.bus.number}` : ''}` },
+              { icon: Clock, text: tripLine(run) },
+            ]}
+          />
+        ))}
+        {runs.length > 0 && shown.length === 0 && (
+          <Card><T color={t.muted}>No trips in this direction today.</T></Card>
+        )}
+
+        {alerts.length > 0 && <SectionLabel>My reminders</SectionLabel>}
+        {alerts.map((a) => (
+          <Card key={a.id} style={s.tripCard}>
+            <View style={s.row}>
+              <View style={s.iconBox}><Bell size={18} color={t.goldText} /></View>
+              <View style={{ flex: 1, marginLeft: space.m }}>
+                <T v="strong">{a.scheduledTime} trip</T>
+                <T v="caption" color={t.muted}>{a.minutesBefore} min before {stopName(a.stopId)}</T>
+              </View>
+              <Pressable onPress={() => removeAlert(a)} hitSlop={12} accessibilityRole="button" accessibilityLabel="Remove reminder" style={s.iconBtn}>
+                <Trash2 size={20} color={t.red} />
+              </Pressable>
             </View>
           </Card>
-        </Pressable>
-      ))}
-
-      {alerts.length > 0 && <Text style={styles.section}>My reminders</Text>}
-      {alerts.map((a) => (
-        <Card key={a.id} style={styles.tripCard}>
-          <View style={styles.row}>
-            <Text style={{ flex: 1, color: colors.text }}>
-              {a.scheduledTime} trip · {a.minutesBefore} min before {stopName(a.stopId)}
-            </Text>
-            <Pressable onPress={() => removeAlert(a)} hitSlop={10}>
-              <Text style={{ color: colors.danger }}>Remove</Text>
-            </Pressable>
-          </View>
-        </Card>
-      ))}
-    </ScrollView>
+        ))}
+      </ScrollView>
+      <ProfileMenu visible={menu} user={user} onClose={() => setMenu(false)} onLogout={onLogout} />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 40 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  hello: { fontSize: 22, fontWeight: '700', color: colors.text },
-  date: { fontSize: 14, color: colors.muted, marginTop: 2 },
-  logout: { color: colors.primary, fontWeight: '600' },
-  nextCard: { backgroundColor: colors.primaryLight, borderColor: colors.primary, marginBottom: 8 },
-  nextLabel: { fontSize: 12, fontWeight: '700', color: colors.primary, letterSpacing: 1 },
-  nextTime: { fontSize: 34, fontWeight: '700', color: colors.text, marginRight: 12 },
-  nextTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: 4 },
-  countdown: { fontSize: 15, fontWeight: '700', color: colors.primary, marginTop: 2 },
-  link: { color: colors.primary, fontWeight: '600', marginTop: 10 },
-  section: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 20, marginBottom: 8 },
+const makeStyles = (t) => ({
+  content: { padding: space.xl, paddingBottom: 48 },
   row: { flexDirection: 'row', alignItems: 'center' },
-  tripCard: { marginBottom: 10 },
-  tripTime: { fontSize: 20, fontWeight: '700', color: colors.text, width: 60 },
-  tripTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
-  muted: { fontSize: 14, color: colors.muted, marginTop: 2 },
+  tripCard: { marginBottom: space.m },
+  iconBox: { width: 40, height: 40, borderRadius: radius.input, backgroundColor: t.goldTint, alignItems: 'center', justifyContent: 'center' },
+  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });

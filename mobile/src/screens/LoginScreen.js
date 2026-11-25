@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { LogIn } from 'lucide-react-native';
 import { api } from '../api';
 import { API_URL } from '../config';
-import { colors } from '../theme';
-import { Button, ErrorText } from '../components/ui';
+import { space, useTheme } from '../theme';
+import { Button, ErrorText, Field, Logo, T } from '../components/ui';
 
 export default function LoginScreen({ onLoggedIn }) {
+  const { t } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   async function submit() {
+    if (!username || !password) return;
     setBusy(true);
     setError('');
     try {
@@ -25,15 +28,15 @@ export default function LoginScreen({ onLoggedIn }) {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.inner}>
-        <Text style={styles.logo}>🚌</Text>
-        <Text style={styles.title}>GIU on the Move</Text>
-        <Text style={styles.subtitle}>Live shuttle tracking</Text>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: t.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space.xxl }} keyboardShouldPersistTaps="handled">
+        <Logo width={260} />
+        <T v="body" color={t.muted} style={{ textAlign: 'center', marginTop: space.s, marginBottom: space.xxxl }}>
+          Live shuttle tracking for GIU
+        </T>
 
-        <Text style={styles.label}>Username</Text>
-        <TextInput
-          style={styles.input}
+        <Field
+          label="Username"
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
@@ -41,9 +44,8 @@ export default function LoginScreen({ onLoggedIn }) {
           placeholder="e.g. student01"
           returnKeyType="next"
         />
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
+        <Field
+          label="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -52,29 +54,10 @@ export default function LoginScreen({ onLoggedIn }) {
           onSubmitEditing={submit}
         />
         <ErrorText message={error} />
-        <View style={{ height: 16 }} />
-        <Button title="Log in" onPress={submit} busy={busy} disabled={!username || !password} />
-        <Text style={styles.server}>Server: {API_URL}</Text>
-      </View>
+        <View style={{ height: space.xxl }} />
+        <Button title="Log in" icon={LogIn} onPress={submit} busy={busy} disabled={!username || !password} />
+        <T v="caption" color={t.disabled} style={{ marginTop: space.xxl, textAlign: 'center' }}>Server: {API_URL}</T>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  inner: { flex: 1, justifyContent: 'center', padding: 24 },
-  logo: { fontSize: 48, textAlign: 'center' },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: colors.primary },
-  subtitle: { fontSize: 16, textAlign: 'center', color: colors.muted, marginBottom: 32 },
-  label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 6, marginTop: 12 },
-  input: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  server: { marginTop: 24, textAlign: 'center', color: colors.muted, fontSize: 12 },
-});

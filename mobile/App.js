@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from './src/api';
-import { colors } from './src/theme';
-import { Button, ErrorText } from './src/components/ui';
+import { useFonts } from 'expo-font';
+// Only the four weights the brand guide uses, so the other font files are not bundled
+import { PlusJakartaSans_500Medium } from '@expo-google-fonts/plus-jakarta-sans/500Medium';
+import { PlusJakartaSans_600SemiBold } from '@expo-google-fonts/plus-jakarta-sans/600SemiBold';
+import { PlusJakartaSans_700Bold } from '@expo-google-fonts/plus-jakarta-sans/700Bold';
+import { PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans/800ExtraBold';
+import { ThemeProvider, useTheme } from './src/theme';
+import { Button, ErrorText, T } from './src/components/ui';
 import LoginScreen from './src/screens/LoginScreen';
 import TimetableScreen from './src/screens/TimetableScreen';
 import TripScreen from './src/screens/TripScreen';
@@ -18,6 +24,20 @@ import { useRiderAlerts } from './src/useRiderAlerts';
 const SESSION_KEY = 'giu-session';
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold,
+  });
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        {fontsLoaded ? <Main /> : <View style={{ flex: 1, backgroundColor: '#121212' }} />}
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function Main() {
+  const { t } = useTheme();
   const [session, setSession] = useState(null); // { token, user }
   const [route, setRoute] = useState(null);     // the route line and stops, loaded once after login
   const [openRun, setOpenRun] = useState(null); // the trip the rider or driver is looking at
@@ -60,7 +80,7 @@ export default function App() {
 
   let screen;
   if (starting) {
-    screen = <Centered><ActivityIndicator color={colors.primary} /></Centered>;
+    screen = <Centered><ActivityIndicator color={t.gold} /></Centered>;
   } else if (!session) {
     screen = <LoginScreen onLoggedIn={login} />;
   } else if (session.user.role === 'driver') {
@@ -74,8 +94,8 @@ export default function App() {
   } else if (session.user.role !== 'rider') {
     screen = (
       <Centered>
-        <Text style={styles.title}>Hi, {session.user.name}</Text>
-        <Text style={styles.text}>The {session.user.role} screens are not built yet. Log in with a student account to try the rider app.</Text>
+        <T v="title1" style={{ marginBottom: 8 }}>Hi, {session.user.name}</T>
+        <T color={t.muted} style={{ textAlign: 'center', marginBottom: 20 }}>The {session.user.role} screens are not built yet. Log in with a student account to try the rider app.</T>
         <Button title="Log out" onPress={logout} />
       </Centered>
     );
@@ -83,11 +103,11 @@ export default function App() {
     screen = (
       <Centered>
         <ErrorText message={error} />
-        <View style={{ marginTop: 16 }}><Button title="Log out" kind="outline" onPress={logout} /></View>
+        <View style={{ marginTop: 16 }}><Button title="Log out" kind="secondary" onPress={logout} /></View>
       </Centered>
     );
   } else if (openRun && !route) {
-    screen = <Centered><ActivityIndicator color={colors.primary} /></Centered>;
+    screen = <Centered><ActivityIndicator color={t.gold} /></Centered>;
   } else if (openRun) {
     screen = <TripScreen session={session} route={route} run={openRun} onBack={() => setOpenRun(null)} />;
   } else {
@@ -95,22 +115,13 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safe}>
-        <StatusBar style="dark" />
-        {screen}
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.background }}>
+      <StatusBar style={t.statusBar} />
+      {screen}
+    </SafeAreaView>
   );
 }
 
 function Centered({ children }) {
-  return <View style={styles.centered}>{children}</View>;
+  return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>{children}</View>;
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: 8 },
-  text: { fontSize: 15, color: colors.muted, textAlign: 'center', marginBottom: 20 },
-});

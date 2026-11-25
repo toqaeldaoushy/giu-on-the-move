@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, View } from 'react-native';
+import { Bell, BusFront, Phone, User, Users } from 'lucide-react-native';
 import { api, connectLive } from '../api';
-import { colors, directionText } from '../theme';
-import { Button, Card, ErrorText, StatusBadge } from '../components/ui';
+import { directionText, radius, space, useStyles, useTheme } from '../theme';
+import { Button, ErrorText, Header, HeroCard, SectionLabel, StatusBadge, T, Tile } from '../components/ui';
 import BusMap from '../components/BusMap';
 
 const timeOf = (stamp) => (stamp ? String(stamp).slice(11, 16) : '');
@@ -20,6 +21,8 @@ function headline(run, live, stopName) {
 
 export default function TripScreen({ session, route, run: initialRun, onBack }) {
   const { token } = session;
+  const { t } = useTheme();
+  const st = useStyles(makeStyles);
   const [run, setRun] = useState(initialRun);
   const [live, setLive] = useState(initialRun.live);
   const [connected, setConnected] = useState(false);
@@ -133,119 +136,100 @@ export default function TripScreen({ session, route, run: initialRun, onBack }) 
   const phone = run.driver?.phone;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Pressable onPress={onBack} hitSlop={10}>
-        <Text style={styles.back}>‹ Timetable</Text>
-      </Pressable>
-
-      <View style={styles.titleRow}>
-        <Text style={styles.time}>{run.scheduledTime}</Text>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.title}>{run.label}</Text>
-          <Text style={styles.muted}>{directionText[run.direction]}</Text>
-        </View>
-        <StatusBadge label={live?.statusLabel ?? 'Not started'} />
-      </View>
-
-      <Card style={styles.etaCard}>
-        <Text style={styles.headline}>{headline(run, live, stopName)}</Text>
-        {run.status === 'in_progress' && live?.remainingKm != null && (
-          <Text style={styles.muted}>
-            {live.remainingKm} km to the end of the route
-            {live.delayMinutes != null && live.delayMinutes > 0 ? ` · about ${live.delayMinutes} min late` : ''}
-          </Text>
-        )}
-        <Text style={[styles.live, { color: connected ? colors.good : colors.muted }]}>
-          {connected ? '● Live' : '○ Connecting…'}
-          {live?.lastPingAt ? `  ·  last update ${timeOf(live.lastPingAt)}` : ''}
-        </Text>
-      </Card>
-
-      <ErrorText message={error} />
-
-      <View style={{ height: 12 }} />
-      <BusMap route={route} position={live?.position} stopId={stopId} />
-
-      <Text style={styles.section}>My stop</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-        {stops.map((s) => (
-          <Pressable
-            key={s.id}
-            onPress={() => setStopId(s.id)}
-            style={[styles.chip, s.id === stopId && styles.chipOn]}
-          >
-            <Text style={[styles.chipText, s.id === stopId && styles.chipTextOn]}>{s.name}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {canRemind && (
-        <>
-          <Text style={styles.section}>Remind me before the bus reaches {stopName}</Text>
-          <View style={styles.buttonRow}>
-            {[2, 5, 10].map((m) => (
-              <Button
-                key={m}
-                small
-                title={`${m} min`}
-                kind={alert?.minutesBefore === m ? 'primary' : 'outline'}
-                busy={busy === `alert${m}`}
-                onPress={() => setReminder(m)}
-              />
-            ))}
-          </View>
-          {alert && (
-            <Text style={styles.muted}>
-              You will get a notification about {alert.minutesBefore} min before the bus reaches {stopName}. Keep the app open or in the background.{' '}
-              <Text style={{ color: colors.danger }} onPress={removeReminder}>Remove</Text>
-            </Text>
+    <View style={{ flex: 1, backgroundColor: t.background }}>
+      <Header
+        title={run.label}
+        subtitle={`${run.scheduledTime} · ${directionText[run.direction]}`}
+        onBack={onBack}
+        right={<StatusBadge label={live?.statusLabel ?? 'Not started'} />}
+      />
+      <ScrollView contentContainerStyle={st.content}>
+        <HeroCard>
+          <T v="label" color={t.onHeroMuted}>{stopName ? `Your stop · ${stopName}` : 'This trip'}</T>
+          <T v="title1" color={t.onHero} style={{ marginTop: space.s }}>{headline(run, live, stopName)}</T>
+          {run.status === 'in_progress' && live?.remainingKm != null && (
+            <T v="caption" color={t.onHeroMuted} style={{ marginTop: space.xs }}>
+              {live.remainingKm} km to the end of the route
+              {live.delayMinutes != null && live.delayMinutes > 0 ? ` · about ${live.delayMinutes} min late` : ''}
+            </T>
           )}
-        </>
-      )}
-
-      <Text style={styles.section}>Bus and driver</Text>
-      <Card>
-        <Text style={styles.infoLine}>
-          Bus {run.bus ? `${run.bus.number} (${run.bus.plate})` : 'not assigned yet'}
-        </Text>
-        <Text style={styles.infoLine}>Driver: {run.driver?.name ?? 'not assigned yet'}</Text>
-        {phone ? (
-          <View style={{ marginTop: 10 }}>
-            <Button title={`Call driver (${phone})`} kind="outline" onPress={() => Linking.openURL(`tel:${phone}`)} />
+          <View style={[st.row, { marginTop: space.m }]}>
+            <View style={[st.dot, { backgroundColor: connected ? (t.mode === 'night' ? t.onHero : t.gold) : t.onHeroMuted }]} />
+            <T v="caption" color={t.onHeroMuted}>
+              {connected ? 'Live' : 'Connecting…'}
+              {live?.lastPingAt ? `  ·  last update ${timeOf(live.lastPingAt)}` : ''}
+            </T>
           </View>
-        ) : (
-          <Text style={styles.muted}>The driver's number is not shared.</Text>
-        )}
-      </Card>
+        </HeroCard>
 
-      {run.status === 'in_progress' && (
-        <View style={{ marginTop: 16 }}>
-          <Button title="Report: the bus is full" kind="danger" busy={busy === 'full'} onPress={reportFull} />
+        <ErrorText message={error} />
+
+        <View style={{ height: space.m }} />
+        <BusMap route={route} position={live?.position} stopId={stopId} />
+
+        <SectionLabel>My stop</SectionLabel>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.s }}>
+          {stops.map((s) => {
+            const on = s.id === stopId;
+            return (
+              <Pressable key={s.id} onPress={() => setStopId(s.id)} accessibilityRole="radio" accessibilityState={{ selected: on }}
+                style={[st.chip, on && st.chipOn]}>
+                <T v="caption" color={on ? t.onPrimary : t.text} style={on && { fontFamily: 'PlusJakartaSans_700Bold' }}>{s.name}</T>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        {canRemind && (
+          <>
+            <SectionLabel>Remind me before the bus reaches my stop</SectionLabel>
+            <View style={st.buttonRow}>
+              {[2, 5, 10].map((m) => (
+                <Button
+                  key={m}
+                  small
+                  icon={alert?.minutesBefore === m ? Bell : undefined}
+                  title={`${m} min`}
+                  kind={alert?.minutesBefore === m ? 'accent' : 'secondary'}
+                  busy={busy === `alert${m}`}
+                  onPress={() => setReminder(m)}
+                />
+              ))}
+            </View>
+            {alert && (
+              <T v="caption" color={t.muted} style={{ marginTop: space.s }}>
+                You will get a notification about {alert.minutesBefore} min before the bus reaches {stopName}. Keep the app open or in the background.{' '}
+                <T v="caption" color={t.red} onPress={removeReminder} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Remove</T>
+              </T>
+            )}
+          </>
+        )}
+
+        <SectionLabel>Bus and driver</SectionLabel>
+        <View style={st.tiles}>
+          <Tile icon={BusFront} label="Bus" value={run.bus ? `${run.bus.number} · ${run.bus.plate}` : 'Not assigned yet'} />
+          <Tile icon={User} label="Driver" value={run.driver?.name ?? 'Not assigned yet'} />
         </View>
-      )}
-    </ScrollView>
+        {phone ? (
+          <Button title={`Call driver (${phone})`} kind="secondary" icon={Phone} onPress={() => Linking.openURL(`tel:${phone}`)} style={{ marginTop: space.m }} />
+        ) : (
+          <T v="caption" color={t.muted} style={{ marginTop: space.s }}>The driver's number is not shared.</T>
+        )}
+
+        {run.status === 'in_progress' && (
+          <Button title="Report: the bus is full" kind="danger" icon={Users} busy={busy === 'full'} onPress={reportFull} style={{ marginTop: space.xxl }} />
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 40 },
-  back: { color: colors.primary, fontSize: 16, fontWeight: '600', marginBottom: 12 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  time: { fontSize: 30, fontWeight: '700', color: colors.text },
-  title: { fontSize: 16, fontWeight: '600', color: colors.text },
-  muted: { fontSize: 14, color: colors.muted, marginTop: 4 },
-  etaCard: { backgroundColor: colors.primaryLight, borderColor: colors.primary },
-  headline: { fontSize: 20, fontWeight: '700', color: colors.text },
-  live: { fontSize: 13, marginTop: 8 },
-  section: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 20, marginBottom: 8 },
-  chip: {
-    borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card,
-    borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8,
-  },
-  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.text, fontSize: 14 },
-  chipTextOn: { color: '#fff', fontWeight: '600' },
-  buttonRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
-  infoLine: { fontSize: 15, color: colors.text, marginBottom: 4 },
+const makeStyles = (t) => ({
+  content: { padding: space.xl, paddingBottom: 48 },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  dot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  chip: { borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.pill, paddingHorizontal: 14, height: 40, justifyContent: 'center' },
+  chipOn: { backgroundColor: t.primary, borderColor: t.primary },
+  buttonRow: { flexDirection: 'row', gap: space.s },
+  tiles: { flexDirection: 'row', gap: space.s },
 });
