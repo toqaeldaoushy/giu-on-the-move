@@ -11,6 +11,8 @@ import TimetableScreen from './src/screens/TimetableScreen';
 import TripScreen from './src/screens/TripScreen';
 import DriverHomeScreen from './src/screens/DriverHomeScreen';
 import DriverTripScreen from './src/screens/DriverTripScreen';
+import AdminHomeScreen from './src/screens/AdminHomeScreen';
+import AdminTripScreen from './src/screens/AdminTripScreen';
 
 const SESSION_KEY = 'giu-session';
 
@@ -29,7 +31,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!session || session.user.role !== 'rider') return;
+    if (!session) return;
+    // Loaded in the background: the timetable shows at once, the map needs the route a moment later
     api('/route', { token: session.token })
       .then(setRoute)
       .catch((e) => {
@@ -58,8 +61,12 @@ export default function App() {
     screen = <LoginScreen onLoggedIn={login} />;
   } else if (session.user.role === 'driver') {
     screen = openRun
-      ? <DriverTripScreen session={session} run={openRun} onBack={() => setOpenRun(null)} />
+      ? <DriverTripScreen session={session} route={route} run={openRun} onBack={() => setOpenRun(null)} />
       : <DriverHomeScreen session={session} onOpenTrip={setOpenRun} onLogout={logout} />;
+  } else if (session.user.role === 'admin') {
+    screen = openRun
+      ? <AdminTripScreen session={session} run={openRun} onBack={() => setOpenRun(null)} />
+      : <AdminHomeScreen session={session} onOpenTrip={setOpenRun} onLogout={logout} />;
   } else if (session.user.role !== 'rider') {
     screen = (
       <Centered>
@@ -68,17 +75,19 @@ export default function App() {
         <Button title="Log out" onPress={logout} />
       </Centered>
     );
-  } else if (!route) {
+  } else if (error && !route) {
     screen = (
       <Centered>
-        {error ? <ErrorText message={error} /> : <ActivityIndicator color={colors.primary} />}
-        {error ? <View style={{ marginTop: 16 }}><Button title="Log out" kind="outline" onPress={logout} /></View> : null}
+        <ErrorText message={error} />
+        <View style={{ marginTop: 16 }}><Button title="Log out" kind="outline" onPress={logout} /></View>
       </Centered>
     );
+  } else if (openRun && !route) {
+    screen = <Centered><ActivityIndicator color={colors.primary} /></Centered>;
   } else if (openRun) {
     screen = <TripScreen session={session} route={route} run={openRun} onBack={() => setOpenRun(null)} />;
   } else {
-    screen = <TimetableScreen session={session} stops={route.stops} onOpenTrip={setOpenRun} onLogout={logout} />;
+    screen = <TimetableScreen session={session} stops={route?.stops ?? []} onOpenTrip={setOpenRun} onLogout={logout} />;
   }
 
   return (
