@@ -176,6 +176,13 @@ async function accessMatrix() {
     ['PATCH', `/admin/drivers/${X}`, 'admin', { name: 'x' }], ['PATCH', `/admin/runs/${X}/assignment`, 'admin', { driverId: 2 }],
     ['POST', `/admin/runs/${X}/cancel`, 'admin'], ['POST', '/admin/runs/generate', 'admin', { date: 'not-a-date' }],
     ['GET', '/admin/reports?date=2026-10-08', 'admin'], ['GET', '/admin/assignment-changes', 'admin'],
+    // added with the later features (lines, seats, timetable changes, announcements, ratings, punctuality)
+    ['GET', '/routes', 'any'], ['GET', '/route?id=1', 'any'], ['GET', '/announcements', 'any'],
+    ['GET', `/runs/${X}/feedback`, 'rider'], ['POST', `/runs/${X}/feedback`, 'rider', {}],
+    ['POST', `/driver/runs/${X}/occupancy`, 'driver', {}],
+    ['GET', '/admin/trips', 'admin'], ['GET', '/admin/schedule-changes', 'admin'], ['POST', '/admin/schedule-changes', 'admin', {}],
+    ['DELETE', `/admin/schedule-changes/${X}`, 'admin'], ['GET', '/admin/announcements', 'admin'], ['POST', '/admin/announcements', 'admin', {}],
+    ['POST', `/admin/announcements/${X}/end`, 'admin'], ['GET', '/admin/punctuality', 'admin'], ['GET', '/admin/feedback', 'admin'],
   ];
   const callers = Object.keys(tokens);
   let total = 0; let ok = 0; let leaks = 0; const rows = [];
@@ -276,7 +283,13 @@ const routeApi = await call('GET', '/route', { token: admin });
 const live2 = await call('GET', `/runs/${run2}/live?stopId=${(await pool.query('select id from stops where route_id = 2 order by seq limit 1')).rows[0].id}`, { token: admin });
 console.log(`Timetable for 2026-10-08 lists ${tt.body.runs?.length} runs, including the route-2 run: ${tt.body.runs?.some((r) => r.id === run2) ? 'YES' : 'NO'}`);
 console.log(`Live state of the route-2 run after the trip: status ${live2.body.status ?? live2.body.statusLabel}, progress ${live2.body.live?.progress ?? live2.body.progress}`);
-console.log(`GET /api/route returns route ${routeApi.body.id} only ("${routeApi.body.name}"): the endpoint and the app assume one route`);
+const lines = await call('GET', '/routes', { token: admin });
+const route2 = await call('GET', '/route?id=2', { token: admin });
+const onlyLine2 = await call('GET', '/timetable?date=2026-10-08&routeId=2', { token: admin });
+console.log(`GET /api/route without an id returns route ${routeApi.body.id} ("${routeApi.body.name}"), as before`);
+console.log(`GET /api/routes lists ${lines.body.routes?.length} lines: ${lines.body.routes?.map((l) => `${l.id} (${l.stopCount} stops)`).join(', ')}`);
+console.log(`GET /api/route?id=2 returns route ${route2.body.id} with ${route2.body.stops?.length} stops and ${route2.body.points?.length} points`);
+console.log(`Timetable filtered to line 2 lists ${onlyLine2.body.runs?.length} run(s), all on line 2: ${onlyLine2.body.runs?.every((r) => r.routeId === 2) ? 'YES' : 'NO'}`);
 
 const { rows: [size] } = await pool.query(
   `select count(*)::int as n, pg_total_relation_size('gps_pings') as total, pg_relation_size('gps_pings') as heap from gps_pings`);

@@ -1,0 +1,175 @@
+// GIU on the Move: database diagram (Figure 4.2). Paste into dbdiagram.io and export as PNG.
+// 16 tables; new since the first diagram: schedule_changes, announcements, trip_feedback,
+// and the occupancy columns of trip_runs.
+
+Table users {
+  id integer [pk]
+  name text [not null]
+  role text [not null, note: 'rider, driver or admin']
+  username text [not null, unique]
+  phone text
+  share_phone boolean [not null, default: false]
+  auth_user_id uuid [unique]
+}
+
+Table credentials {
+  user_id integer [pk, ref: - users.id]
+  password_hash text [not null]
+}
+
+Table buses {
+  id integer [pk]
+  bus_number text [not null, unique]
+  plate text [not null, unique]
+  capacity integer [not null]
+  status text [not null, note: 'active or maintenance']
+  device_id text [not null, unique]
+}
+
+Table routes {
+  id integer [pk]
+  name text [not null]
+}
+
+Table route_points {
+  route_id integer [pk, ref: > routes.id]
+  seq integer [pk]
+  lat float [not null]
+  lon float [not null]
+}
+
+Table stops {
+  id integer [pk]
+  route_id integer [not null, ref: > routes.id]
+  name text [not null]
+  lat float [not null]
+  lon float [not null]
+  seq integer [not null]
+}
+
+Table trips {
+  id integer [pk]
+  code text [not null, unique]
+  label text [not null]
+  route_id integer [not null, ref: > routes.id]
+  direction text [not null, note: 'inbound or outbound']
+  scheduled_time time [not null]
+}
+
+Table schedule_changes {
+  id integer [pk]
+  trip_id integer [not null, ref: > trips.id]
+  new_time time [not null]
+  from_date date [not null]
+  to_date date [not null]
+  reason text
+  created_by integer [not null, ref: > users.id]
+  created_at timestamp [not null]
+}
+
+Table trip_runs {
+  id integer [pk]
+  trip_id integer [not null, ref: > trips.id]
+  run_date date [not null]
+  bus_id integer [ref: > buses.id]
+  driver_id integer [ref: > users.id]
+  status text [not null, note: 'scheduled, in_progress, completed or cancelled']
+  actual_start timestamp
+  actual_end timestamp
+  occupancy text [note: 'seats, few or full (reported by the driver)']
+  occupancy_at timestamp
+}
+
+Table gps_pings {
+  id bigint [pk]
+  trip_run_id integer [not null, ref: > trip_runs.id]
+  bus_id integer [not null, ref: > buses.id]
+  device_id text [not null]
+  timestamp timestamp [not null]
+  lat float [not null]
+  lon float [not null]
+  speed_kmh float [not null]
+}
+
+Table assignment_changes {
+  id integer [pk]
+  trip_run_id integer [not null, ref: > trip_runs.id]
+  old_driver_id integer [ref: > users.id]
+  new_driver_id integer [ref: > users.id]
+  old_bus_id integer [ref: > buses.id]
+  new_bus_id integer [ref: > buses.id]
+  changed_by integer [not null, ref: > users.id]
+  reason text
+  changed_at timestamp [not null]
+}
+
+Table problem_reports {
+  id integer [pk]
+  trip_run_id integer [not null, ref: > trip_runs.id]
+  driver_id integer [not null, ref: > users.id]
+  report_type text [not null]
+  note text
+  created_at timestamp [not null]
+}
+
+Table rider_reports {
+  id integer [pk]
+  user_id integer [not null, ref: > users.id]
+  trip_run_id integer [not null, ref: > trip_runs.id]
+  report_type text [not null]
+  created_at timestamp [not null]
+}
+
+Table alerts {
+  id integer [pk]
+  user_id integer [not null, ref: > users.id]
+  trip_run_id integer [not null, ref: > trip_runs.id]
+  stop_id integer [not null, ref: > stops.id]
+  minutes_before integer [not null]
+  created_at timestamp [not null]
+}
+
+Table announcements {
+  id integer [pk]
+  message text [not null]
+  created_by integer [not null, ref: > users.id]
+  created_at timestamp [not null]
+  ended_at timestamp
+}
+
+Table trip_feedback {
+  id integer [pk]
+  user_id integer [not null, ref: > users.id]
+  trip_run_id integer [not null, ref: > trip_runs.id]
+  rating integer [not null, note: '1 to 5']
+  comment text
+  created_at timestamp [not null]
+}
+
+TableGroup users_and_credentials {
+  users
+  credentials
+  buses
+}
+
+TableGroup route_and_timetable {
+  routes
+  route_points
+  stops
+  trips
+  schedule_changes
+}
+
+TableGroup live_trip_data {
+  trip_runs
+  gps_pings
+  assignment_changes
+}
+
+TableGroup reports_alerts_and_ratings {
+  problem_reports
+  rider_reports
+  alerts
+  announcements
+  trip_feedback
+}
