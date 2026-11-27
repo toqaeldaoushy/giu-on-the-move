@@ -3,8 +3,6 @@
 // SIMULATED DATA ONLY. Results show how the methods behave under the stated assumptions, not real-world accuracy.
 //
 // Sources for the assumptions (see the thesis, Chapter 3):
-//   Speed limits in Egypt: 60 km/h inside cities, 90 km/h on highways (Egypt Today, traffic law guide).
-//   Cairo major corridors: 60-80 km/h expected, 15-40 km/h in congestion (World Bank, Cairo Traffic Congestion Study).
 //   Cairo rush hour 2025: 23.2 km/h average, 26.2 morning, 21.1 evening (TomTom Traffic Index).
 //   Bus dwell time at stops: about 21-29 s on average (Washington DC study, 2015; not Egyptian data).
 //   Bus acceleration about 1.1 m/s2 and braking about 1.3 m/s2 (Keller and Krasna, 2023).
