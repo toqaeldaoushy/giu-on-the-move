@@ -141,9 +141,9 @@ export default function TimetableScreen({ session, stops, lines = [], lineId, on
           </View>
         ))}
 
-        {lines.length > 1 && (
+        {lines.length > 0 && (
           <>
-            <T v="label" color={t.muted} style={{ marginBottom: space.s }}>Line</T>
+            <T v="label" color={t.muted} style={{ marginBottom: space.s }}>Choose your line</T>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.s, paddingBottom: space.m }}>
               {lines.map((l) => {
                 const on = l.id === lineId;
@@ -156,6 +156,11 @@ export default function TimetableScreen({ session, stops, lines = [], lineId, on
                 );
               })}
             </ScrollView>
+            {lines.length === 1 && (
+              <T v="caption" color={t.muted} style={{ marginTop: -space.s, marginBottom: space.m }}>
+                Other lines appear here when they are added.
+              </T>
+            )}
           </>
         )}
 
