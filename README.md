@@ -73,3 +73,7 @@ Passing the checks shows the data is consistent and follows the rules of the sys
 ## Next step
 
 The backend (Node.js, Express, Socket.io) that reads this database, receives live pings from a driver simulator and sends them to the rider's map.
+
+## Use of AI tools
+
+This project was developed with the support of AI tools, as described in Section 1.8 of the thesis. Claude (Anthropic) was used together with the researcher on the code of the mobile app, the server, the automated tests, the driver simulator and the evaluation scripts, and on generating the simulated dataset. ChatGPT was used for the app logo, for brainstorming features and for explaining technical concepts, and Google Stitch for early prototypes of the app's screens. All code was run and tested by the researcher, and every dataset produced by a generator script is labeled as simulated. The survey responses, the recorded GPS trip and the usability session results come from real participants and were not generated or altered by AI.
